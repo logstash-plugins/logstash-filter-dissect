@@ -1,0 +1,15 @@
+*.gem
+Gemfile.lock
+Gemfile.bak
+.bundle
+vendor
+
+# build dirs
+build
+.gradle
+gradle
+
+# Intellij
+.idea
+*.iml
+logstash-core-event-java.jar
