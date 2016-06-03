@@ -3,9 +3,7 @@ package org.logstash.dissect;
 import org.jruby.Ruby;
 import org.jruby.RubyArray;
 import org.jruby.RubyString;
-import org.jruby.anno.JRubyClass;
 
-@JRubyClass(name = "JrJackson::ParseError", parent = "RuntimeError")
 public class DissectorError {
     public static RubyString message(Ruby ruby, Throwable cause) {
         return RubyString.newString(ruby, cause.toString());
