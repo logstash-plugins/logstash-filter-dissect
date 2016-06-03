@@ -6,11 +6,18 @@ buildscript {
     }
 }
 
+plugins {
+    id "me.champeau.gradle.jmh" version "0.3.1"
+    id "com.github.johnrengelman.shadow" version "1.2.3"
+}
 repositories {
     mavenLocal()
     mavenCentral()
     jcenter()
 }
+
+apply plugin: 'java'
+apply plugin: 'idea'
 
 gradle.projectsEvaluated {
     tasks.withType(JavaCompile) {
@@ -19,12 +26,11 @@ gradle.projectsEvaluated {
     }
 }
 
-apply plugin: 'java'
-apply plugin: 'idea'
-
 group = 'org.logstash.dissect'
 
 project.sourceCompatibility = 1.8
+
+
 
 task sourcesJar(type: Jar, dependsOn: classes) {
     from sourceSets.main.allSource
@@ -49,8 +55,16 @@ task cleanGemjar {
     }
 }
 
+task copyShadowGemjar(type: Copy) {
+    from project.shadowJar
+    into project.file('lib/jars/')
+}
+
 clean.dependsOn(cleanGemjar)
-jar.finalizedBy(copyGemjar)
+build.dependsOn(shadowJar)
+
+// jar.finalizedBy(copyGemjar)
+shadowJar.finalizedBy(copyShadowGemjar)
 
 configurations.create('sources')
 configurations.create('javadoc')
@@ -89,9 +103,13 @@ idea {
 }
 
 dependencies {
+    compile files('java_libs/stringsearch-2.2.jar')
     provided 'org.jruby:jruby-core:1.7.22'
-    provided files('lib/logstash-core-event-java.jar')
+    provided files('java_libs/logstash-core-event-java.jar')
     testCompile 'junit:junit:4.12'
+    testCompile 'com.fasterxml.jackson.core:jackson-core:2.7.3'
+    testCompile 'com.fasterxml.jackson.core:jackson-databind:2.7.3'
+    jmh compile(files('java_libs/logstash-core-event-java.jar'))
 }
 
 // See http://www.gradle.org/docs/current/userguide/gradle_wrapper.html
