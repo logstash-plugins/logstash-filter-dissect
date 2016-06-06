@@ -13,30 +13,115 @@ import java.util.concurrent.TimeUnit;
 
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
-@Warmup(iterations = 10, time = 6, timeUnit = TimeUnit.SECONDS)
-@Measurement(iterations = 2, time = 1000, timeUnit = TimeUnit.MILLISECONDS)
-@Threads(1)
+@Warmup(iterations = 10, time = 2, timeUnit = TimeUnit.SECONDS)
+@Measurement(iterations = 20, time = 500, timeUnit = TimeUnit.MILLISECONDS)
+@Threads(2)
 @Fork(2)
 public class DissectorBenchmark {
     @Benchmark
-    public void aDissector(Blackhole bh) {
+    public void aWarmupVLong(Blackhole bh) {
         bh.consume(
-                DissectState.DISSECTOR.dissect(DissectState.SRC.getBytes(), DissectState.map())
+                DissectVLongDelims.DISSECTOR.dissect(DissectVLongDelims.SRC.getBytes(), DissectMap.map())
         );
+    }
 
+    @Benchmark
+    public void dOneDelim(Blackhole bh) {
+        bh.consume(
+                DissectOneDelim.DISSECTOR.dissect(DissectOneDelim.SRC.getBytes(), DissectMap.map())
+        );
+    }
+
+    @Benchmark
+    public void eTwoDelim(Blackhole bh) {
+        bh.consume(
+                DissectTwoDelims.DISSECTOR.dissect(DissectTwoDelims.SRC.getBytes(), DissectMap.map())
+        );
+    }
+
+    @Benchmark
+    public void cLongDelims(Blackhole bh) {
+        bh.consume(
+                DissectLongDelims.DISSECTOR.dissect(DissectLongDelims.SRC.getBytes(), DissectMap.map())
+        );
+    }
+
+    @Benchmark
+    public void bVLongDelims(Blackhole bh) {
+        bh.consume(
+                DissectVLongDelims.DISSECTOR.dissect(DissectVLongDelims.SRC.getBytes(), DissectMap.map())
+        );
+    }
+
+
+    @State(Scope.Thread)
+    public static class DissectOneDelim {
+        public static final String SRC = Source.buildSrc(Source.delims1, 10);
+        public static final Dissector DISSECTOR = new Dissector(Source.buildMpp(Source.delims1, 10));
     }
 
     @State(Scope.Thread)
-    public static class DissectState {
-        public static final String SRC = "42 2016-05-25T14:47:23Z host.name.com RT_FLOW - RT_FLOW_SESSION_DENY: session denied 2.2.2.20/60000->1.1.1.10/8090 None 6(0) DEFAULT-DENY ZONE-UNTRUST ZONE-DMZ UNKNOWN UNKNOWN N/A(N/A) ge-0/0/0.0";
-        public static final String MPP = "%{} %{syslog_timestamp} %{hostname} %{rt}: %{reason} %{reason!} %{src_ip}/%{src_port}->%{dst_ip}/%{dst_port} %{polrt} %{polrt!} %{polrt!} %{from_zone} %{to_zone} %{rest}";
+    public static class DissectTwoDelims {
+        public static final String SRC = Source.buildSrc(Source.delims2, 10);
+        public static final Dissector DISSECTOR = new Dissector(Source.buildMpp(Source.delims2, 10));
+    }
 
-        public static final Dissector DISSECTOR = new Dissector(MPP);
+    @State(Scope.Thread)
+    public static class DissectLongDelims {
+        public static final String SRC = Source.buildSrc(Source.delims3, 10);
+        public static final Dissector DISSECTOR = new Dissector(Source.buildMpp(Source.delims3, 10));
+    }
 
+    @State(Scope.Thread)
+    public static class DissectVLongDelims {
+        public static final String SRC = Source.buildSrc(Source.delimsX, 10);
+        public static final Dissector DISSECTOR = new Dissector(Source.buildMpp(Source.delimsX, 10));
+    }
+
+    @State(Scope.Thread)
+    public static class DissectMap {
         public static Map<String, Object> map() {
-            return new HashMap<String, Object>();
+            return new HashMap<>();
         }
     }
+
+    private static class Source {
+        private static String src = "QQQQQwwwww‰‰‰‰‰rrrrrtttttYYYYYuuuuuIIIIIøøøøøpppppåååååsssssdddddfffffgggggHHHHHjjjjjkkkkkLLLLLzzzzz";
+        private static String mpp = "%{a}%{b}%{c}%{d}%{e}%{f}%{g}%{h}%{i}%{j}";
+
+        public static String[] delims1 = new String[]{" ", ".", ",", "/", "?", "|", "!", "$"};
+        public static String[] delims2 = new String[]{" *", ". ", ",.", "/,", "?/", "|?", "!|", "$!"};
+        public static String[] delims3 = new String[]{" *^", ". *", ",. ", "/,.", "?/,", "|?/", "!|?", "$!|"};
+        public static String[] delimsX = new String[]{" *..........^", ". ..........*", ",........... ", "/,...........", "?/..........,", "|?........../", "!|..........?", "$!..........|"};
+
+        public static String buildSrc(String[] delims, int count) {
+            int d = delims.length;
+            StringBuilder sb = new StringBuilder();
+            int k = 0;
+            for(int i = 0; i < count; i++) {
+                k = (i * 5) % src.length();
+                sb.append(src.substring(k, k + 5));
+                sb.append(delims[i % d]);
+            }
+            sb.append("MMMMM");
+            return sb.toString();
+        }
+
+        public static String buildMpp(String[] delims, int count) {
+            int d = delims.length;
+            StringBuilder sb = new StringBuilder();
+            int k = 0;
+            for(int i = 0; i < count; i++) {
+                k = (i * 4) % mpp.length();
+                sb.append(mpp.substring(k, k + 4));
+                sb.append(delims[i % d]);
+            }
+            sb.append("%{k}");
+            return sb.toString();
+        }
+    }
+
+
 
 	/*
 	 * It is better to run the benchmark from command-line instead of IDE.

@@ -1,7 +1,7 @@
 package org.logstash.dissect;
 
 class FieldBuilder {
-    public IField build(String field) {
+    public static IField build(String field) {
         if (field.isEmpty() || field.startsWith("?")) {
             return SkipField.createField(field);
         }

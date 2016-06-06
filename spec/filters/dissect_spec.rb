@@ -98,7 +98,7 @@ describe LogStash::Filters::Dissect do
     end
   end
 
-  describe "baseline performance test" do
+  describe "baseline performance test", :performance => true do
     event_count = 1000000
     min_rate = 30000
 

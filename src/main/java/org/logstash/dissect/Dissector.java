@@ -10,14 +10,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Dissector {
-    private final DelimBuilder delimBuilder = new DelimBuilder();
-    private final FieldBuilder fieldBuilder = new FieldBuilder();
     private final Pattern pattern = Pattern.compile("(.*?)%\\{(.*?)\\}");
     private String mapping;
     private ArrayList<IDelim> delimiters = new ArrayList<>();
     private ArrayList<IField> fields = new ArrayList<>();
     private ArrayList<IField> saveableFields = new ArrayList<>();
-    private HashMap<IField, ValueRef> intermediates;
+    private HashMap<IField, ValueRef> intermediates = new HashMap<>();
     private int initialOffset = 0;
     private IField lastField;
 
@@ -46,15 +44,10 @@ public class Dissector {
         return pos;
     }
 
-    public int dissectWithError() throws Exception {
-        return 1 / 0 ;
-    }
-
     private int dissectValues(byte[] source) {
         if (source.length == 0) return 0;
         int left = initialOffset;
         int pos = initialOffset;
-        ValueRef vr;
         for (IField field : fields) {
             IDelim delim = field.delimiter();
             boolean found = false;
@@ -72,21 +65,20 @@ public class Dissector {
             }
         }
         left = pos + lastField.previousDelimSize();
-
-        vr = intermediates.get(lastField);
-        vr.set_position(left);
-        vr.set_length(source.length - left);
+        intermediates.get(lastField).set(left, source.length - left);
         return pos;
     }
 
     private void parseMapping() {
         if (mapping.isEmpty()) return;
-
+        intermediates.put(Field.getMissing(), new ValueRef());
         Matcher m = pattern.matcher(mapping);
+
         while (m.find()) {
             handleFoundDelim(m.group(1));
             handleFoundField(m.group(2));
         }
+
         // normally f,d,f,d,f,d,f,d,f ds are one less than fs
         // but can be d,f,d,f,d,f,d,f - then drop first
         if (delimiters.size() == fields.size()) {
@@ -98,21 +90,11 @@ public class Dissector {
 
         for (int i = 0; i < delimiters.size(); i++) {
             IDelim d = delimiters.get(i);
-            IField f = fields.get(i);
-            IField n = fields.get(i + 1);
-            f.addNextDelim(d);
-            n.addPreviousDelim(d);
+            fields.get(i).addNextDelim(d);
+            fields.get(i + 1).addPreviousDelim(d);
         }
 
         delimiters.clear();
-
-        intermediates = new HashMap<>(fields.size() + 1);
-
-        for (IField field : fields) {
-            intermediates.put(field, new ValueRef());
-        }
-
-        intermediates.put(Field.getMissing(), new ValueRef());
 
         int lastFieldIndex = fields.size() - 1;
         if (lastFieldIndex > -1) {
@@ -121,15 +103,15 @@ public class Dissector {
 
         // the fields List has the last element removed to allow for a
         // different way to set the value
-        //the saveableFields List has only the Field and AppendField elements
+        //the saveableFields List is fields List minus the Skip fields
         // sorted so AppendFields are last
-
         Collections.sort(saveableFields, new FieldComparator());
     }
 
     private void handleFoundField(String field) {
-        IField f = fieldBuilder.build(field);
+        IField f = FieldBuilder.build(field);
         fields.add(f);
+        intermediates.put(f, new ValueRef());
         if (f.saveable()) {
             saveableFields.add(f);
         }
@@ -137,7 +119,7 @@ public class Dissector {
 
     private void handleFoundDelim(String delim) {
         if (!delim.isEmpty()) {
-            delimiters.add(delimBuilder.build(delim));
+            delimiters.add(DelimBuilder.build(delim));
         }
     }
 

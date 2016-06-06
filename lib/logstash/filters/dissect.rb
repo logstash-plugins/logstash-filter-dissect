@@ -3,8 +3,8 @@ require "logstash/filters/base"
 require "logstash/namespace"
 
 require "java"
-require "jars/jruby-dissect-library-all.jar"
-require "jruby_dissect"
+require "jars/jruby-dissect-library.jar"
+require "jruby_dissector"
 
 # De-structures text
 #

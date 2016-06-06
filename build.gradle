@@ -8,7 +8,7 @@ buildscript {
 
 plugins {
     id "me.champeau.gradle.jmh" version "0.3.1"
-    id "com.github.johnrengelman.shadow" version "1.2.3"
+    // id "com.github.johnrengelman.shadow" version "1.2.3"
 }
 repositories {
     mavenLocal()
@@ -55,16 +55,16 @@ task cleanGemjar {
     }
 }
 
-task copyShadowGemjar(type: Copy) {
-    from project.shadowJar
-    into project.file('lib/jars/')
-}
+// task copyShadowGemjar(type: Copy) {
+//     from project.shadowJar
+//     into project.file('lib/jars/')
+// }
 
 clean.dependsOn(cleanGemjar)
-build.dependsOn(shadowJar)
+// build.dependsOn(shadowJar)
 
-// jar.finalizedBy(copyGemjar)
-shadowJar.finalizedBy(copyShadowGemjar)
+jar.finalizedBy(copyGemjar)
+// shadowJar.finalizedBy(copyShadowGemjar)
 
 configurations.create('sources')
 configurations.create('javadoc')
@@ -103,7 +103,7 @@ idea {
 }
 
 dependencies {
-    compile files('java_libs/stringsearch-2.2.jar')
+    // compile files('java_libs/stringsearch-2.2.jar')
     provided 'org.jruby:jruby-core:1.7.22'
     provided files('java_libs/logstash-core-event-java.jar')
     testCompile 'junit:junit:4.12'
