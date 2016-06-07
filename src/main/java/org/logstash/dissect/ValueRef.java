@@ -1,5 +1,7 @@
 package org.logstash.dissect;
 
+import java.util.Arrays;
+
 public class ValueRef {
     private int _position = 0;
     private int _length = 0;
@@ -16,8 +18,12 @@ public class ValueRef {
         _length = length;
     }
 
-    public String value(byte[] source) {
+    public String string(byte[] source) {
         return new String(source, _position, _length);
+    }
+
+    public byte[] bytes(byte[] source) {
+        return Arrays.copyOfRange(source, _position, _length);
     }
 
     @Override

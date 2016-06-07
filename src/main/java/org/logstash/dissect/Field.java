@@ -34,22 +34,27 @@ class Field implements IField {
         return s.substring(1);
     }
 
+    @Override
     public boolean saveable() {
         return true;
     }
 
+    @Override
     public void append(Map<String, Object> map, ValueResolver values) {
         map.put(_name, values.get(this));
     }
 
+    @Override
     public void append(Event event, ValueResolver values) {
       event.setField(_name, values.get(this));
     }
 
+    @Override
     public void addPreviousDelim(IDelim d) {
         _join = d;
     }
 
+    @Override
     public void addNextDelim(IDelim d) {
         _next = d;
     }
@@ -59,10 +64,12 @@ class Field implements IField {
         return _name;
     }
 
+    @Override
     public int ordinal() {
         return _ordinal;
     }
 
+    @Override
     public int previousDelimSize() {
         if (_join == null) {
             return 0;
@@ -77,6 +84,7 @@ class Field implements IField {
         return _join.string();
     }
 
+    @Override
     public IDelim delimiter() {
         return _next;
     }

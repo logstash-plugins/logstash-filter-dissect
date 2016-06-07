@@ -13,14 +13,23 @@ class DelimTwo implements IDelim {
         b2 = b[1];
     }
 
-    public int indexOf(byte[] data, int offset) {
-        return BruteForce.indexOf(data, offset, b1, b2);
+    @Override
+    public int indexOf(byte[] text, int textStart) {
+        for (int n = textStart; n < text.length - 1; n++) {
+            if (text[n] == b1) {
+                if (text[n + 1] == b2)
+                    return n;
+            }
+        }
+        return -1;
     }
 
+    @Override
     public int size() {
         return length;
     }
 
+    @Override
     public String string() {
         return _string;
     }

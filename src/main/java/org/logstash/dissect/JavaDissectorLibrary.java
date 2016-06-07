@@ -22,6 +22,7 @@ public class JavaDissectorLibrary implements Library {
         RubyModule module = runtime.defineModule("LogStash");
 
         RubyClass clazz = runtime.defineClassUnder("Dissector", runtime.getObject(), new ObjectAllocator() {
+            @Override
             public IRubyObject allocate(Ruby runtime, RubyClass rubyClass) {
                 return new RubyDissect(runtime, rubyClass);
             }

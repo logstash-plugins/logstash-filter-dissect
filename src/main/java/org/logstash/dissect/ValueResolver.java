@@ -12,7 +12,7 @@ public class ValueResolver {
     }
 
     public String get(IField field) {
-        return values.get(field).value(source);
+        return values.get(field).string(source);
     }
 
     public IField find(String name, IField notThis) {

@@ -10,14 +10,21 @@ class DelimOne implements IDelim {
         b = delim.getBytes()[0];
     }
 
-    public int indexOf(byte[] data, int offset) {
-        return BruteForce.indexOf(data, offset, b);
+    @Override
+    public int indexOf(byte[] text, int textStart) {
+        for (int n = textStart; n < text.length; n++) {
+            if (text[n] == b)
+                return n;
+        }
+        return -1;
     }
 
+    @Override
     public int size() {
         return length;
     }
 
+    @Override
     public String string() {
         return _string;
     }

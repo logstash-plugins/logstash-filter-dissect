@@ -6,6 +6,7 @@ import org.jruby.runtime.load.BasicLibraryService;
 import java.io.IOException;
 
 public class JrubyDissectorService implements BasicLibraryService {
+    @Override
     public boolean basicLoad(final Ruby runtime)
             throws IOException
     {
