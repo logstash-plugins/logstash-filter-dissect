@@ -1,26 +1,17 @@
 package org.logstash.dissect;
 
-class DelimTwo implements IDelim {
-    private final byte b1;
-    private final byte b2;
+class DelimZero implements IDelim {
+    private final byte b;
     private final String _string;
-    private final int length = 2;
+    private final int length = 1;
 
-    public DelimTwo(String delim) {
-        _string = delim;
-        byte[] b = delim.getBytes();
-        b1 = b[0];
-        b2 = b[1];
+    public DelimZero() {
+        _string = "";
+        b = 0;
     }
 
     @Override
     public int indexOf(byte[] text, int textStart) {
-        for (int n = textStart; n < text.length - 1; n++) {
-            if (text[n] == b1) {
-                if (text[n + 1] == b2)
-                    return n;
-            }
-        }
         return -1;
     }
 
@@ -36,7 +27,7 @@ class DelimTwo implements IDelim {
 
     @Override
     public String toString() {
-        final StringBuffer sb = new StringBuffer("DelimTwo{");
+        final StringBuffer sb = new StringBuffer("DelimZero{");
         sb.append("string='").append(_string);
         sb.append("', length=").append(length);
         sb.append('}');

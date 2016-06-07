@@ -6,8 +6,10 @@ class DelimBuilder {
             return new DelimOne(delim);
         } else if (delim.length() == 2) {
             return new DelimTwo(delim);
-        } else {
+        } else if(delim.length() > 2) {
             return new DelimMany(delim);
+        } else {
+            return new DelimZero();
         }
     }
 }

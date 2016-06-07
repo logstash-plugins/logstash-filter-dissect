@@ -64,6 +64,10 @@ class DelimMany implements IDelim {
 
     @Override
     public String toString() {
-        return "'" + _string + "'";
+        final StringBuffer sb = new StringBuffer("DelimMany{");
+        sb.append("string='").append(_string);
+        sb.append("', length=").append(length);
+        sb.append('}');
+        return sb.toString();
     }
 }

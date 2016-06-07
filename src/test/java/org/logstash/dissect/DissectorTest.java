@@ -36,6 +36,40 @@ public class DissectorTest {
     }
 
     @Test
+    public void testMissingDelimBegin() throws Exception {
+        Map<String, Object> object = new HashMap<>();
+        subject("%{a}%{b} %{c}")
+                .dissect("foo bar   baz".getBytes(), object);
+        assertEquals(3, object.size());
+        assertEquals("", object.get("a"));
+        assertEquals("foo", object.get("b"));
+        assertEquals("bar   baz", object.get("c"));
+    }
+
+    @Test
+    public void testMissingDelimMiddle() throws Exception {
+        Map<String, Object> object = new HashMap<>();
+        subject("%{a} %{b}%{c} %{d}")
+                .dissect("foo bar baz".getBytes(), object);
+        assertEquals(4, object.size());
+        assertEquals("foo", object.get("a"));
+        assertEquals("", object.get("b"));
+        assertEquals("bar", object.get("c"));
+        assertEquals("baz", object.get("d"));
+    }
+    @Test
+    public void testMissingDelimEnd() throws Exception {
+        Map<String, Object> object = new HashMap<>();
+        subject("%{a} %{b} %{c}%{d}")
+                .dissect("foo bar baz quux".getBytes(), object);
+        assertEquals(4, object.size());
+        assertEquals("foo", object.get("a"));
+        assertEquals("bar", object.get("b"));
+        assertEquals("", object.get("c"));
+        assertEquals("foo bar baz quux", object.get("d"));
+    }
+
+    @Test
     public void testBasicArgsWithSkip() throws Exception {
         Map<String, Object> object = new HashMap<>();
         subject("%{a} %{} %{c}")

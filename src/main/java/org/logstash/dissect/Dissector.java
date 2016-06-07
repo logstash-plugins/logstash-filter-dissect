@@ -48,6 +48,7 @@ public class Dissector {
         if (source.length == 0) return 0;
         int left = initialOffset;
         int pos = initialOffset;
+
         for (IField field : fields) {
             IDelim delim = field.delimiter();
             boolean found = false;
@@ -118,9 +119,10 @@ public class Dissector {
     }
 
     private void handleFoundDelim(String delim) {
-        if (!delim.isEmpty()) {
-            delimiters.add(DelimBuilder.build(delim));
+        if (delim.isEmpty() && fields.size() == 0) {
+            // this is a noop as for most cases an empty first delimiter is normal and we don't add it
+            return;
         }
+        delimiters.add(DelimBuilder.build(delim));
     }
-
 }

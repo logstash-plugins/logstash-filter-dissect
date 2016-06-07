@@ -91,6 +91,12 @@ class Field implements IField {
 
     @Override
     public String toString() {
-        return "'" + _name + "'";
+        final StringBuffer sb = new StringBuffer("Field{");
+        sb.append("name=").append(_name);
+        sb.append(", ordinal=").append(_ordinal);
+        sb.append(", join=").append(_join);
+        sb.append(", delimiter=").append(_next);
+        sb.append('}');
+        return sb.toString();
     }
 }

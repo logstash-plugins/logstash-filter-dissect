@@ -31,6 +31,10 @@ class DelimOne implements IDelim {
 
     @Override
     public String toString() {
-        return "'" + _string + "'";
+        final StringBuffer sb = new StringBuffer("DelimOne{");
+        sb.append("string='").append(_string);
+        sb.append("', length=").append(length);
+        sb.append('}');
+        return sb.toString();
     }
 }
