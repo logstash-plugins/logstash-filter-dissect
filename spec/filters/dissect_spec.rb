@@ -74,7 +74,6 @@ describe LogStash::Filters::Dissect do
   end
 
   context "when mapping a key is not found" do
-
     subject(:filter) {  LogStash::Filters::Dissect.new(config)  }
 
     let(:message)    { "very random message :-)" }
@@ -84,17 +83,59 @@ describe LogStash::Filters::Dissect do
 
     before(:each) do
       filter.logger = loggr
-      filter.register
-      filter.filter(event)
+    end
+
+    it "does not raise any exceptions" do
+      expect{filter.register}.not_to raise_exception
     end
 
     it "dissect failure tag is added" do
+      filter.register
+      filter.filter(event)
       expect(loggr.msgs).to eq(["Event before dissection", "Dissector mapping, key not found in event", "Event after dissection"])
       expect(loggr.hashes[0]).to be_a(Hash)
       expect(loggr.hashes[1]).to be_a(Hash)
       expect(loggr.hashes[2]).to be_a(Hash)
       expect(loggr.hashes[1].keys).to include("key")
       expect(loggr.hashes[1]["key"]).to eq("blah-di-blah")
+    end
+  end
+
+  describe "valid field format handling" do
+    subject(:filter) {  LogStash::Filters::Dissect.new(config)  }
+    let(:config)     { {"mapping" => {"message" => "%{+timestamp/2} %{+timestamp/1} %{?no_name} %{&no_name} %{} %{program}[%{pid}]: %{msg}"}}}
+    let(:loggr)      { LoggerMock.new }
+
+    before(:each) do
+      filter.logger = loggr
+    end
+    it "does not raise an error in register" do
+      expect{filter.register}.not_to raise_exception
+    end
+  end
+
+  describe "invalid field format handling" do
+    subject(:filter) {  LogStash::Filters::Dissect.new(config)  }
+    let(:loggr)      { LoggerMock.new }
+
+    before(:each) do
+      filter.logger = loggr
+    end
+
+    context "when field is defined as Append and Indirect (+&)" do
+      let(:config)     { {"mapping" => {"message" => "%{+&timestamp}"}}}
+      it "raises an error in register" do
+        msg = "org.logstash.dissect.InvalidFieldException: Field cannot prefix with both Append and Indirect Prefix (+&): +&timestamp"
+        expect{filter.register}.to raise_exception(LogStash::FieldFormatError, msg)
+      end
+    end
+
+    context "when field is defined as Indirect and Append (&+)" do
+      let(:config)     { {"mapping" => {"message" => "%{&+timestamp}"}}}
+      it "raises an error in register" do
+        msg = "org.logstash.dissect.InvalidFieldException: Field cannot prefix with both Append and Indirect Prefix (&+): &+timestamp"
+        expect{filter.register}.to raise_exception(LogStash::FieldFormatError, msg)
+      end
     end
   end
 

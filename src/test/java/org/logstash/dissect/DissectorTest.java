@@ -1,7 +1,9 @@
 package org.logstash.dissect;
 
 import com.logstash.Event;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -306,6 +308,25 @@ public class DissectorTest {
         assertEquals("ZONE-UNTRUST", object.getField("from_zone"));
         assertEquals("ZONE-DMZ", object.getField("to_zone"));
         assertEquals("UNKNOWN UNKNOWN N/A(N/A) ge-0/0/0.0", object.getField("rest"));
+    }
+
+    @Rule
+    public ExpectedException exception = ExpectedException.none();
+
+    @Test
+    public void testInvalidAppendIndirectField() {
+        String mpp = "%{+&a_field}";
+        exception.expect(InvalidFieldException.class);
+        exception.expectMessage("Field cannot prefix with both Append and Indirect Prefix (+&): +&a_field");
+        subject(mpp);
+    }
+
+    @Test
+    public void testInvalidIndirectAppendField() {
+        String mpp = "%{&+a_field}";
+        exception.expect(InvalidFieldException.class);
+        exception.expectMessage("Field cannot prefix with both Append and Indirect Prefix (&+): &+a_field");
+        subject(mpp);
     }
 
 }

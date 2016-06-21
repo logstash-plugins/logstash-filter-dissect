@@ -8,7 +8,6 @@ buildscript {
 
 plugins {
     id "me.champeau.gradle.jmh" version "0.3.1"
-    // id "com.github.johnrengelman.shadow" version "1.2.3"
 }
 repositories {
     mavenLocal()
@@ -103,8 +102,7 @@ idea {
 }
 
 dependencies {
-    // compile files('java_libs/stringsearch-2.2.jar')
-    provided 'org.jruby:jruby-core:1.7.22'
+    provided 'org.jruby:jruby-core:1.7.25'
     provided files('java_libs/logstash-core-event-java.jar')
     testCompile 'junit:junit:4.12'
     testCompile 'com.fasterxml.jackson.core:jackson-core:2.7.3'

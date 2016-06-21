@@ -2,8 +2,17 @@ package org.logstash.dissect;
 
 import com.logstash.Event;
 import com.logstash.ext.JrubyEventExtLibrary.RubyEvent;
-import org.jruby.*;
+import org.jruby.NativeException;
+import org.jruby.Ruby;
+import org.jruby.RubyArray;
+import org.jruby.RubyBoolean;
+import org.jruby.RubyClass;
+import org.jruby.RubyHash;
+import org.jruby.RubyModule;
+import org.jruby.RubyObject;
+import org.jruby.RubyString;
 import org.jruby.anno.JRubyMethod;
+import org.jruby.exceptions.RaiseException;
 import org.jruby.internal.runtime.methods.DynamicMethod;
 import org.jruby.runtime.ObjectAllocator;
 import org.jruby.runtime.ThreadContext;
@@ -27,8 +36,17 @@ public class JavaDissectorLibrary implements Library {
                 return new RubyDissect(runtime, rubyClass);
             }
         }, module);
-
         clazz.defineAnnotatedMethods(RubyDissect.class);
+
+        RubyClass runtimeError = runtime.getRuntimeError();
+        module.defineClassUnder("FieldFormatError", runtimeError, runtimeError.getAllocator());
+    }
+
+    private static class FieldFormatError {
+        public static NativeException newNativeException(Ruby ruby, Throwable cause) {
+            RubyClass errorClass = ruby.getModule("LogStash").getClass("FieldFormatError");
+            return new NativeException(ruby, errorClass, cause);
+        }
     }
 
     public static class RubyDissect extends RubyObject {
@@ -51,7 +69,13 @@ public class JavaDissectorLibrary implements Library {
             maps.visitAll(new RubyHash.Visitor() {
                 @Override
                 public void visit(IRubyObject srcField, IRubyObject mapping) {
-                    dissectors.put(srcField.asString(), new Dissector(mapping.asJavaString()));
+                    Dissector d;
+                    try {
+                        d = new Dissector(mapping.asJavaString());
+                    } catch (InvalidFieldException e) {
+                        throw new RaiseException(e, FieldFormatError.newNativeException(ctx.runtime, e));
+                    }
+                    dissectors.put(srcField.asString(), d);
                 }
             });
             return ctx.nil;

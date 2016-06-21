@@ -68,12 +68,12 @@ require "jruby_dissector"
 # The found value is added to the Event using the found value of another field as the key.
 # The key is prefixed with a `&`.
 # `%{&some_field}` - an indirect field where the key is indirectly sourced from the value of `some_field`.
-# e.g. for a text of `error: some_error, description`, this `error: %{?err}, %{&desc}`will build a key/value of `'an error' => description`
+# e.g. for a text of `error: some_error, description`, this `error: %{?err}, %{&desc}`will build a key/value of `'some_error' => description`
 # Hint: use a Skip field if you do not want the indirection key/value stored.
 # e.g. for a text of `google: 77.98`, this `%{?a}: %{&a}` will build a key/value of `google => 77.98`.
 
 # Note: for append and indirect field the key can refer to a field that already exists in the event before dissection.
-# Note: append and indirect cannot be combined...
+# Note: append and indirect cannot be combined. This will fail validation.
 # `%{+&something}` - will add a value to the `&something` key, probably not the intended outcome.
 # `%{&+something}` will add a value to the `+something` key, again unintended.
 
@@ -99,7 +99,7 @@ require "jruby_dissector"
 #   }
 # }
 
-class LogStash::Filters::Dissect < LogStash::Filters::Base
+module LogStash module Filters class Dissect < LogStash::Filters::Base
 
   config_name "dissect"
 
@@ -128,7 +128,7 @@ class LogStash::Filters::Dissect < LogStash::Filters::Base
   public
 
   def register
-    @dissector = LogStash::Dissector.new(@mapping)
+     @dissector = LogStash::Dissector.new(@mapping)
   end
 
   def filter(event)
@@ -142,4 +142,4 @@ class LogStash::Filters::Dissect < LogStash::Filters::Base
     @dissector.dissect_multi(events, self)
     events
   end
-end
+end end end
