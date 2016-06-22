@@ -49,6 +49,69 @@ describe LogStash::Filters::Dissect do
     end
   end
 
+  describe "Basic dissection with datatype conversion" do
+    let(:config) do <<-CONFIG
+      filter {
+        dissect {
+          mapping => {
+            message => "[%{occurred_at}] %{code} %{service} %{?ic}=%{&ic}% %{svc_message}"
+          }
+          convert_datatype => {
+            cpu => "float"
+            code => "int"
+          }
+        }
+      }
+    CONFIG
+    end
+
+    sample("message" => "[25/05/16 09:10:38:425 BST] 00000001 SystemOut cpu=95.43% java.lang:type=MemoryPool,name=class storage") do
+      expect(subject.get("occurred_at")).to eq("25/05/16 09:10:38:425 BST")
+      expect(subject.get("code")).to eq(1)
+      expect(subject.get("service")).to eq("SystemOut")
+      expect(subject.get("cpu")).to eq(95.43)
+      expect(subject.get("svc_message")).to eq("java.lang:type=MemoryPool,name=class storage")
+    end
+  end
+
+  describe "Basic dissection with failing datatype conversion" do
+    subject(:filter) {  LogStash::Filters::Dissect.new(config)  }
+
+    let(:message)    { "[25/05/16 09:10:38:425 BST] 00000001 SystemOut cpu=95.43% java.lang:type=MemoryPool,name=class storage" }
+    let(:config)     do
+      {
+          "mapping" => {"message" => "[%{occurred_at}] %{code} %{service} %{?ic}=%{&ic}% %{svc_message}"},
+          "convert_datatype" => {
+            "ccu" => "float", # ccu field -> nil
+            "code" => "integer", # only int is supported
+            "other" => "int" # other field -> hash - not coercible
+          }
+      }
+    end
+    let(:event)      { LogStash::Event.new("message" => message, "other" => {}) }
+    let(:loggr)      { LoggerMock.new }
+
+    before(:each) do
+      filter.logger = loggr
+    end
+
+    it "tags and log messages are created" do
+      filter.register
+      filter.filter(event)
+      expect(event.get("code")).to eq("00000001")
+      expect(event.get("tags")).to eq(["_dataconversionnullvalue_ccu_float", "_dataconversionmissing_code_integer", "_dataconversionuncoercible_other_int"])
+      expect(loggr.msgs).to eq(
+          [
+              "Event before dissection",
+              "Dissector datatype conversion, value cannot be coerced, key: ccu, value: null",
+              "Dissector datatype conversion, datatype not supported: integer",
+              "Dissector datatype conversion, value cannot be coerced, key: other, value: {}",
+              "Event after dissection"
+          ]
+      )
+    end
+  end
+
   describe "dissect with skip and append" do
     let(:config) do <<-CONFIG
         filter {
@@ -89,15 +152,10 @@ describe LogStash::Filters::Dissect do
       expect{filter.register}.not_to raise_exception
     end
 
-    it "dissect failure tag is added" do
+    it "dissect failure key missing is logged" do
       filter.register
       filter.filter(event)
       expect(loggr.msgs).to eq(["Event before dissection", "Dissector mapping, key not found in event", "Event after dissection"])
-      expect(loggr.hashes[0]).to be_a(Hash)
-      expect(loggr.hashes[1]).to be_a(Hash)
-      expect(loggr.hashes[2]).to be_a(Hash)
-      expect(loggr.hashes[1].keys).to include("key")
-      expect(loggr.hashes[1]["key"]).to eq("blah-di-blah")
     end
   end
 
@@ -109,6 +167,7 @@ describe LogStash::Filters::Dissect do
     before(:each) do
       filter.logger = loggr
     end
+
     it "does not raise an error in register" do
       expect{filter.register}.not_to raise_exception
     end

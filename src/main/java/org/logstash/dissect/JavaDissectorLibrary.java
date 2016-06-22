@@ -91,7 +91,6 @@ public class JavaDissectorLibrary implements Library {
             RubyObject plugin = (RubyObject) arg2;
             RubyObject logger = (RubyObject) getLoggerObject(ctx, plugin);
             try {
-                // @logger.debug? && @logger.debug("Event before dissection", "event" => event.to_hash)
                 if(logLevelEnabled(ctx, logger, "debug")) {
                     logDebug(ctx, logger, "Event before dissection", buildDebugEventMap(ctx, re));
                 }
@@ -109,9 +108,8 @@ public class JavaDissectorLibrary implements Library {
                         logWarn(ctx, logger, "Dissector mapping, key not found in event", map);
                     }
                 }
-                invoke_conversions(ctx, getMethod(plugin, "convert_datatype"), plugin, re);
+                invoke_conversions(ctx, getMethod(plugin, "convert_datatype"), plugin, re, logger);
                 invoke_filter_matched(ctx, getMethod(plugin, "filter_matched"), plugin, re);
-                // @logger.debug? && @logger.debug("Event after dissection", "event" => event.to_hash)
                 if(logLevelEnabled(ctx, logger, "debug")) {
                     logDebug(ctx, logger, "Event after dissection", buildDebugEventMap(ctx, re));
                 }
@@ -136,7 +134,7 @@ public class JavaDissectorLibrary implements Library {
             return target.getMetaClass().searchMethod(name);
         }
 
-        private IRubyObject invoke_conversions(ThreadContext ctx, DynamicMethod m, RubyObject plugin, RubyEvent event) {
+        private IRubyObject invoke_conversions(ThreadContext ctx, DynamicMethod m, RubyObject plugin, RubyEvent event, RubyObject logger) {
             if (!m.isUndefined()) {
                 Event javaEvent = event.getEvent();
                 RubyHash conversions = (RubyHash) m.call(ctx, plugin, plugin.getMetaClass(), "convert_datatype");
@@ -147,8 +145,22 @@ public class JavaDissectorLibrary implements Library {
                         String newType = toType.asJavaString();
                         try {
                             Converters.select(newType).convert(javaEvent, src);
-                        } catch (DataTypeCoercionException e) {
-                            javaEvent.tag(String.format("_datatypeconversionfailure_%s_%s", src, newType));
+                        } catch (NumberFormatException e) {
+                            Object val = javaEvent.getField(src);
+                            if (val == null) {
+                                javaEvent.tag(String.format("_dataconversionnullvalue_%s_%s", src, newType));
+                            } else {
+                                javaEvent.tag(String.format("_dataconversionuncoercible_%s_%s", src, newType));
+                            }
+                            String msg = String.format(
+                                    "Dissector datatype conversion, value cannot be coerced, key: %s, value: %s",
+                                    src,
+                                    String.valueOf(val)
+                            );
+                            logWarn(ctx, logger, msg, null);
+                        } catch (IllegalArgumentException e) {
+                            javaEvent.tag(String.format("_dataconversionmissing_%s_%s", src, newType));
+                            logWarn(ctx, logger, "Dissector datatype conversion, datatype not supported: " + newType, null);
                         }
                     }
                 });
@@ -213,8 +225,13 @@ public class JavaDissectorLibrary implements Library {
             if (m.isUndefined()) {
                 return ctx.nil;
             }
-            RubyHash h = RubyHash.newHash(ruby, map, ctx.nil);
-            m.call(ctx, logger, logger.getMetaClass(), level, new IRubyObject[]{rubyString(ruby, message), h});
+            if (map != null) {
+                RubyHash h = RubyHash.newHash(ruby, map, ctx.nil);
+                m.call(ctx, logger, logger.getMetaClass(), level, new IRubyObject[]{rubyString(ruby, message), h});
+            } else {
+                m.call(ctx, logger, logger.getMetaClass(), level, new IRubyObject[]{rubyString(ruby, message)});
+            }
+
             return ctx.nil;
         }
 
