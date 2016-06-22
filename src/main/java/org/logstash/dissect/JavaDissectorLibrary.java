@@ -23,7 +23,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-
 public class JavaDissectorLibrary implements Library {
 
     @Override
@@ -40,10 +39,10 @@ public class JavaDissectorLibrary implements Library {
 
         RubyClass runtimeError = runtime.getRuntimeError();
         module.defineClassUnder("FieldFormatError", runtimeError, runtimeError.getAllocator());
-    }
+     }
 
-    private static class FieldFormatError {
-        public static NativeException newNativeException(Ruby ruby, Throwable cause) {
+    private static class NativeExceptions {
+        public static NativeException newFieldFormatError(Ruby ruby, Throwable cause) {
             RubyClass errorClass = ruby.getModule("LogStash").getClass("FieldFormatError");
             return new NativeException(ruby, errorClass, cause);
         }
@@ -73,7 +72,7 @@ public class JavaDissectorLibrary implements Library {
                     try {
                         d = new Dissector(mapping.asJavaString());
                     } catch (InvalidFieldException e) {
-                        throw new RaiseException(e, FieldFormatError.newNativeException(ctx.runtime, e));
+                        throw new RaiseException(e, NativeExceptions.newFieldFormatError(ctx.runtime, e));
                     }
                     dissectors.put(srcField.asString(), d);
                 }
@@ -110,6 +109,7 @@ public class JavaDissectorLibrary implements Library {
                         logWarn(ctx, logger, "Dissector mapping, key not found in event", map);
                     }
                 }
+                invoke_conversions(ctx, getMethod(plugin, "convert_datatype"), plugin, re);
                 invoke_filter_matched(ctx, getMethod(plugin, "filter_matched"), plugin, re);
                 // @logger.debug? && @logger.debug("Event after dissection", "event" => event.to_hash)
                 if(logLevelEnabled(ctx, logger, "debug")) {
@@ -134,6 +134,26 @@ public class JavaDissectorLibrary implements Library {
 
         private DynamicMethod getMethod(RubyObject target, String name) {
             return target.getMetaClass().searchMethod(name);
+        }
+
+        private IRubyObject invoke_conversions(ThreadContext ctx, DynamicMethod m, RubyObject plugin, RubyEvent event) {
+            if (!m.isUndefined()) {
+                Event javaEvent = event.getEvent();
+                RubyHash conversions = (RubyHash) m.call(ctx, plugin, plugin.getMetaClass(), "convert_datatype");
+                conversions.visitAll(new RubyHash.Visitor() {
+                    @Override
+                    public void visit(IRubyObject srcField, IRubyObject toType) {
+                        String src = srcField.asJavaString();
+                        String newType = toType.asJavaString();
+                        try {
+                            Converters.select(newType).convert(javaEvent, src);
+                        } catch (DataTypeCoercionException e) {
+                            javaEvent.tag(String.format("_datatypeconversionfailure_%s_%s", src, newType));
+                        }
+                    }
+                });
+            }
+            return ctx.nil;
         }
 
         private IRubyObject invoke_filter_matched(ThreadContext ctx, DynamicMethod m, RubyObject plugin, RubyEvent event) {

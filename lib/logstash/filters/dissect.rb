@@ -122,6 +122,9 @@ module LogStash module Filters class Dissect < LogStash::Filters::Base
   # dissect it some more.
   config :mapping, :validate => :hash, :default => {}
 
+  # TODO add docs
+  config :convert_datatype, :validate => :hash, :default => {}
+
   # Append values to the `tags` field when dissection fails
   config :tag_on_failure, :validate => :array, :default => ["_dissectfailure"]
 

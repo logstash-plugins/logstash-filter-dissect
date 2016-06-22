@@ -8,8 +8,11 @@ import org.junit.rules.ExpectedException;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 public class DissectorTest {
@@ -23,7 +26,7 @@ public class DissectorTest {
         Map<String, Object> object = new HashMap<>();
         subject("")
                 .dissect("".getBytes(), object);
-        org.junit.Assert.assertEquals(0, object.size());
+        assertThat(object.size(), is(equalTo(0)));
     }
 
     @Test
@@ -31,7 +34,7 @@ public class DissectorTest {
         Map<String, Object> object = new HashMap<>();
         subject("%{a} %{b} %{c}")
                 .dissect("foo bar   baz".getBytes(), object);
-        assertEquals(3, object.size());
+        assertThat(object.size(), is(equalTo(3)));
         assertEquals("foo", object.get("a"));
         assertEquals("bar", object.get("b"));
         assertEquals("  baz", object.get("c"));
