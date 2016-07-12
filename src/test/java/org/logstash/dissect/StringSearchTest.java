@@ -6,7 +6,7 @@ public class StringSearchTest {
     @Test
     public void testIndexOfBytesSearch() throws Exception {
         byte[] source = "aaa bbb ccc ddd".getBytes();
-        IDelim delim = new DelimMany(" ");
+        Delim delim = new DelimMany(" ");
         int p = delim.indexOf(source, 0);
         org.junit.Assert.assertEquals(3, p);
     }
@@ -14,7 +14,7 @@ public class StringSearchTest {
     @Test
     public void testIndexOfBytesSearchOffset() throws Exception {
         byte[] source = "ddd-->eee-->fff-->ggg".getBytes();
-        IDelim delim = new DelimMany("-->");
+        Delim delim = new DelimMany("-->");
         int p = delim.indexOf(source, 5);
         org.junit.Assert.assertEquals(9, p);
     }
@@ -22,7 +22,7 @@ public class StringSearchTest {
     @Test
     public void testIndexOfBytesSearchBegin() throws Exception {
         byte[] source = "-->-->fff-->ggg".getBytes();
-        IDelim delim = new DelimMany("-->");
+        Delim delim = new DelimMany("-->");
         int p = delim.indexOf(source, 0);
         org.junit.Assert.assertEquals(0, p);
     }
@@ -30,7 +30,7 @@ public class StringSearchTest {
     @Test
     public void testIndexOfBytesSearchBeginOffset() throws Exception {
         byte[] source = "-->-->fff-->ggg".getBytes();
-        IDelim delim = new DelimMany("-->");
+        Delim delim = new DelimMany("-->");
         int p = delim.indexOf(source, 3);
         org.junit.Assert.assertEquals(3, p);
     }

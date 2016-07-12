@@ -1,12 +1,12 @@
 package org.logstash.dissect;
 
-class DelimMany implements IDelim {
+class DelimMany implements Delim {
     private final byte[] bytes;
-    private final String _string;
+    private final String string;
     private final int length;
 
     public DelimMany(String delim) {
-        _string = delim;
+        string = delim;
         bytes = delim.getBytes();
         length = bytes.length;
     }
@@ -54,18 +54,18 @@ class DelimMany implements IDelim {
     }
     @Override
     public int size() {
-        return length;
+        return this.length;
     }
 
     @Override
     public String string() {
-        return _string;
+        return this.string;
     }
 
     @Override
     public String toString() {
         final StringBuffer sb = new StringBuffer("DelimMany{");
-        sb.append("string='").append(_string);
+        sb.append("string='").append(string);
         sb.append("', length=").append(length);
         sb.append('}');
         return sb.toString();

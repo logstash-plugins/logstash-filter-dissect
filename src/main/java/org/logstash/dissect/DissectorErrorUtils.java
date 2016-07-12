@@ -4,7 +4,7 @@ import org.jruby.Ruby;
 import org.jruby.RubyArray;
 import org.jruby.RubyString;
 
-public class DissectorError {
+public class DissectorErrorUtils {
     public static RubyString message(Ruby ruby, Throwable cause) {
         return RubyString.newString(ruby, cause.toString());
     }

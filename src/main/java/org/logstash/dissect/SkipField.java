@@ -4,9 +4,9 @@ import com.logstash.Event;
 
 import java.util.Map;
 
-class SkipField extends Field {
+class SkipField extends NormalField {
 
-    public static IField createField(String s) {
+    public static Field create(String s) {
         if (s.isEmpty()) {
             return new SkipField("");
         }

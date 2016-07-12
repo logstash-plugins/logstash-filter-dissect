@@ -1,12 +1,12 @@
 package org.logstash.dissect;
 
-class DelimZero implements IDelim {
+class DelimZero implements Delim {
     private final byte b;
-    private final String _string;
+    private final String string;
     private final int length = 1;
 
     public DelimZero() {
-        _string = "";
+        string = "";
         b = 0;
     }
 
@@ -17,18 +17,18 @@ class DelimZero implements IDelim {
 
     @Override
     public int size() {
-        return length;
+        return this.length;
     }
 
     @Override
     public String string() {
-        return _string;
+        return this.string;
     }
 
     @Override
     public String toString() {
         final StringBuffer sb = new StringBuffer("DelimZero{");
-        sb.append("string='").append(_string);
+        sb.append("string='").append(string);
         sb.append("', length=").append(length);
         sb.append('}');
         return sb.toString();

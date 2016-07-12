@@ -4,9 +4,9 @@ import com.logstash.Event;
 
 import java.util.Map;
 
-class IndirectField extends Field {
+class IndirectField extends NormalField {
 
-    public static IField createField(String s) {
+    public static Field create(String s) {
         return new IndirectField(s);
     }
 

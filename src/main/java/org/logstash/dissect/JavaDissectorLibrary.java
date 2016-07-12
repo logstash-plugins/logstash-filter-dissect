@@ -201,8 +201,8 @@ public class JavaDissectorLibrary implements Library {
         private IRubyObject logException(ThreadContext ctx, RubyObject logger, Throwable ex) {
             Ruby ruby = ctx.runtime;
             HashMap<IRubyObject, IRubyObject> map = new HashMap<>(2);
-            map.put(rubyString(ruby, "exception"), DissectorError.message(ruby, ex));
-            map.put(rubyString(ruby, "backtrace"), DissectorError.backtrace(ruby, ex));
+            map.put(rubyString(ruby, "exception"), DissectorErrorUtils.message(ruby, ex));
+            map.put(rubyString(ruby, "backtrace"), DissectorErrorUtils.backtrace(ruby, ex));
 
             return logError(ctx, logger, "Dissect threw an exception", map);
         }

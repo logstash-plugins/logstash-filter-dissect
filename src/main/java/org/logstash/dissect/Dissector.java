@@ -5,30 +5,59 @@ import com.logstash.Event;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Dissector {
     private final Pattern pattern = Pattern.compile("(.*?)%\\{(.*?)\\}");
-    private String mapping;
-    private ArrayList<IDelim> delimiters = new ArrayList<>();
-    private ArrayList<IField> fields = new ArrayList<>();
-    private ArrayList<IField> saveableFields = new ArrayList<>();
-    private HashMap<IField, ValueRef> intermediates = new HashMap<>();
+    private final List<Field> fields = new ArrayList<>();
+    private final List<Field> saveableFields = new ArrayList<>();
+    private final Map<Field, ValueRef> fieldValueRefMap = new HashMap<>();
     private int initialOffset = 0;
-    private IField lastField;
+    private Field lastField;
 
     public Dissector(String mapping) {
-        this.mapping = mapping;
-        parseMapping();
+        if (mapping.isEmpty()) return;
+
+        fieldValueRefMap.put(NormalField.getMissing(), new ValueRef());
+        Matcher m = pattern.matcher(mapping);
+
+        for (int i = 0; m.find(); i++) {
+            Delim delim = DelimFactory.create(m.group(1));
+            Field field = FieldFactory.create(m.group(2));
+            if (fields.size() == 0) {
+                if (!(delim instanceof DelimZero))
+                    initialOffset = delim.size();
+            } else {
+                field.addPreviousDelim(delim);
+                fields.get(i - 1).addNextDelim(delim);
+            }
+            fields.add(i, field);
+            fieldValueRefMap.put(field, new ValueRef());
+            if (field.saveable()) {
+                saveableFields.add(field);
+            }
+        }
+
+        // the fields List has the last element removed to allow for a
+        // different way to set the value
+        int lastFieldIndex = fields.size() - 1;
+        if ((fields.size() - 1) > -1) {
+            lastField = fields.remove(lastFieldIndex);
+        }
+
+        // the saveableFields List is fields List minus the Skip fields
+        // sorted so AppendFields are last
+        Collections.sort(saveableFields, new FieldComparator());
     }
 
     public int dissect(byte[] source, Map<String, Object> map) {
         int pos = dissectValues(source);
-        ValueResolver resolver = new ValueResolver(source, intermediates);
+        ValueResolver resolver = new ValueResolver(source, fieldValueRefMap);
 
-        for (IField field : saveableFields) {
+        for (Field field : saveableFields) {
             field.append(map, resolver);
         }
         return pos;
@@ -36,9 +65,9 @@ public class Dissector {
 
     public int dissect(byte[] source, Event event) {
         int pos = dissectValues(source);
-        ValueResolver resolver = new ValueResolver(source, intermediates);
+        ValueResolver resolver = new ValueResolver(source, fieldValueRefMap);
 
-        for (IField field : saveableFields) {
+        for (Field field : saveableFields) {
             field.append(event, resolver);
         }
         return pos;
@@ -49,8 +78,8 @@ public class Dissector {
         int left = initialOffset;
         int pos = initialOffset;
 
-        for (IField field : fields) {
-            IDelim delim = field.delimiter();
+        for (Field field : fields) {
+            Delim delim = field.delimiter();
             boolean found = false;
             while (!found) {
                 pos = delim.indexOf(source, left);
@@ -61,68 +90,12 @@ public class Dissector {
                 }
             }
             if (pos > 0) {
-                intermediates.get(field).set(left, pos - left);
+                fieldValueRefMap.get(field).set(left, pos - left);
                 left = pos + delim.size();
             }
         }
         left = pos + lastField.previousDelimSize();
-        intermediates.get(lastField).set(left, source.length - left);
+        fieldValueRefMap.get(lastField).set(left, source.length - left);
         return pos;
-    }
-
-    private void parseMapping() {
-        if (mapping.isEmpty()) return;
-        intermediates.put(Field.getMissing(), new ValueRef());
-        Matcher m = pattern.matcher(mapping);
-
-        while (m.find()) {
-            handleFoundDelim(m.group(1));
-            handleFoundField(m.group(2));
-        }
-
-        // normally f,d,f,d,f,d,f,d,f ds are one less than fs
-        // but can be d,f,d,f,d,f,d,f - then drop first
-        if (delimiters.size() == fields.size()) {
-            // we don't need the first delim
-            IDelim d = delimiters.remove(0);
-            // but we do need to know where the first field starts
-            initialOffset = d.size();
-        }
-
-        for (int i = 0; i < delimiters.size(); i++) {
-            IDelim d = delimiters.get(i);
-            fields.get(i).addNextDelim(d);
-            fields.get(i + 1).addPreviousDelim(d);
-        }
-
-        delimiters.clear();
-
-        int lastFieldIndex = fields.size() - 1;
-        if (lastFieldIndex > -1) {
-            lastField = fields.remove(lastFieldIndex);
-        }
-
-        // the fields List has the last element removed to allow for a
-        // different way to set the value
-        //the saveableFields List is fields List minus the Skip fields
-        // sorted so AppendFields are last
-        Collections.sort(saveableFields, new FieldComparator());
-    }
-
-    private void handleFoundField(String field) {
-        IField f = FieldBuilder.build(field);
-        fields.add(f);
-        intermediates.put(f, new ValueRef());
-        if (f.saveable()) {
-            saveableFields.add(f);
-        }
-    }
-
-    private void handleFoundDelim(String delim) {
-        if (delim.isEmpty() && fields.size() == 0) {
-            // this is a noop as for most cases an empty first delimiter is normal and we don't add it
-            return;
-        }
-        delimiters.add(DelimBuilder.build(delim));
     }
 }

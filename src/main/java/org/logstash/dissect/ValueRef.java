@@ -3,34 +3,35 @@ package org.logstash.dissect;
 import java.util.Arrays;
 
 public class ValueRef {
-    private int _position = 0;
-    private int _length = 0;
+    private int position = 0;
+    private int length = 0;
 
     public void set(int position, int length) {
-        _position = position;_length = length;
+        this.position = position;
+        this.length = length;
     }
 
-    public void set_position(int position) {
-        _position = position;
+    public void setPosition(int position) {
+        this.position = position;
     }
 
-    public void set_length(int length) {
-        _length = length;
+    public void setLength(int length) {
+        this.length = length;
     }
 
     public String string(byte[] source) {
-        return new String(source, _position, _length);
+        return new String(source, position, length);
     }
 
     public byte[] bytes(byte[] source) {
-        return Arrays.copyOfRange(source, _position, _length);
+        return Arrays.copyOfRange(source, position, length);
     }
 
     @Override
     public String toString() {
         final StringBuffer sb = new StringBuffer("ValueRef{");
-        sb.append("_position=").append(_position);
-        sb.append(", _length=").append(_length);
+        sb.append("position=").append(position);
+        sb.append(", length=").append(length);
         sb.append('}');
         return sb.toString();
     }

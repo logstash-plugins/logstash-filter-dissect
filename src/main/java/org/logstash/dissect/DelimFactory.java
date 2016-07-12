@@ -1,7 +1,7 @@
 package org.logstash.dissect;
 
-class DelimBuilder {
-    public static IDelim build(String delim) {
+class DelimFactory {
+    public static Delim create(String delim) {
         if (delim.length() == 1) {
             return new DelimOne(delim);
         } else if (delim.length() == 2) {

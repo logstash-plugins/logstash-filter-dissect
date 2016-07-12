@@ -1,6 +1,6 @@
 package org.logstash.dissect;
 
-interface IDelim {
+interface Delim {
     int indexOf(byte[] data, int offset);
     int size();
     String string();

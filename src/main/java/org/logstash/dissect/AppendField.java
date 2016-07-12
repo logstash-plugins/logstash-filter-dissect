@@ -4,14 +4,14 @@ import com.logstash.Event;
 
 import java.util.Map;
 
-class AppendField extends Field {
+class AppendField extends NormalField {
     private static final int ORD = 2;
 
     private AppendField(String s, int ord) {
         super(s, ord);
     }
 
-    public static IField createField(String s) {
+    public static Field create(String s) {
         if (hasOrdinal(s)) {
             String[] parts = leftChop(s).split("/");
             return new AppendField(parts[0], ORD + Integer.valueOf(parts[1]));

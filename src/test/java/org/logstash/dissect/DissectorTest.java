@@ -320,7 +320,7 @@ public class DissectorTest {
     public void testInvalidAppendIndirectField() {
         String mpp = "%{+&a_field}";
         exception.expect(InvalidFieldException.class);
-        exception.expectMessage("Field cannot prefix with both Append and Indirect Prefix (+&): +&a_field");
+        exception.expectMessage("NormalField cannot prefix with both Append and Indirect Prefix (+&): +&a_field");
         subject(mpp);
     }
 
@@ -328,7 +328,7 @@ public class DissectorTest {
     public void testInvalidIndirectAppendField() {
         String mpp = "%{&+a_field}";
         exception.expect(InvalidFieldException.class);
-        exception.expectMessage("Field cannot prefix with both Append and Indirect Prefix (&+): &+a_field");
+        exception.expectMessage("NormalField cannot prefix with both Append and Indirect Prefix (&+): &+a_field");
         subject(mpp);
     }
 

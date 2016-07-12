@@ -1,24 +1,24 @@
 package org.logstash.dissect;
 
-class FieldBuilder {
-    private static String ERR_MSG = "Field cannot prefix with both Append and Indirect Prefix (%s): %s";
+class FieldFactory {
+    private static final String ERR_MSG = "NormalField cannot prefix with both Append and Indirect Prefix (%s): %s";
 
-    public static IField build(String field) {
+    public static Field create(String field) {
         if (field.isEmpty() || field.startsWith("?")) {
-            return SkipField.createField(field);
+            return SkipField.create(field);
         }
         if (field.startsWith("+&")) {
             throw new InvalidFieldException(String.format(ERR_MSG, "+&", field));
         }
         if (field.startsWith("+")) {
-            return AppendField.createField(field);
+            return AppendField.create(field);
         }
         if (field.startsWith("&+")) {
             throw new InvalidFieldException(String.format(ERR_MSG, "&+", field));
         }
         if (field.startsWith("&")) {
-            return IndirectField.createField(field);
+            return IndirectField.create(field);
         }
-        return Field.createField(field);
+        return NormalField.create(field);
     }
 }
