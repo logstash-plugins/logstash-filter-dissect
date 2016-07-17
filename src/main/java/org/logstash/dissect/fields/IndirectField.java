@@ -1,17 +1,31 @@
-package org.logstash.dissect;
+package org.logstash.dissect.fields;
 
 import com.logstash.Event;
+import org.logstash.dissect.ValueResolver;
 
 import java.util.Map;
 
-class IndirectField extends NormalField {
+public final class IndirectField extends AbstractField {
 
     public static Field create(String s) {
         return new IndirectField(s);
     }
 
-    public IndirectField(String s) {
-        super(leftChop(s), 100);
+    private IndirectField(String s) {
+        super(s, 100);
+    }
+
+    @Override
+    public boolean saveable() {
+        return true;
+    }
+
+    @Override
+    public void append(Map<String, Object> keyValueMap, ValueResolver values) {
+        String indirectName = anyValue(name(), keyValueMap, values);
+        if (!indirectName.isEmpty()) {
+            keyValueMap.put(indirectName, values.get(this));
+        }
     }
 
     @Override
@@ -19,14 +33,6 @@ class IndirectField extends NormalField {
         String indirectName = anyValue(name(), event, values);
         if (!indirectName.isEmpty()) {
             event.setField(indirectName, values.get(this));
-        }
-    }
-
-    @Override
-    public void append(Map<String, Object> map, ValueResolver values) {
-        String indirectName = anyValue(name(), map, values);
-        if (!indirectName.isEmpty()) {
-            map.put(indirectName, values.get(this));
         }
     }
 

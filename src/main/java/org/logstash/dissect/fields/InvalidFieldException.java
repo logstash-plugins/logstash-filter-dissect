@@ -1,4 +1,4 @@
-package org.logstash.dissect;
+package org.logstash.dissect.fields;
 
 public class InvalidFieldException extends RuntimeException {
     public InvalidFieldException() {

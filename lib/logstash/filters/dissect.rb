@@ -131,7 +131,7 @@ module LogStash module Filters class Dissect < LogStash::Filters::Base
   public
 
   def register
-     @dissector = LogStash::Dissector.new(@mapping)
+    @dissector = LogStash::Dissector.new(@mapping)
   end
 
   def filter(event)

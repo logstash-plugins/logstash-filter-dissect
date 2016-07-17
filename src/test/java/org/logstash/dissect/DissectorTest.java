@@ -4,6 +4,7 @@ import com.logstash.Event;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.logstash.dissect.fields.InvalidFieldException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -21,12 +22,15 @@ public class DissectorTest {
         return new Dissector(map);
     }
 
+    @Rule
+    public ExpectedException exception = ExpectedException.none();
+
     @Test
     public void testEmptyArgs() throws Exception {
         Map<String, Object> object = new HashMap<>();
-        subject("")
-                .dissect("".getBytes(), object);
-        assertThat(object.size(), is(equalTo(0)));
+        exception.expect(IllegalArgumentException.class);
+        exception.expectMessage("The mapping string cannot be empty");
+        subject("");
     }
 
     @Test
@@ -71,7 +75,7 @@ public class DissectorTest {
         assertEquals("foo", object.get("a"));
         assertEquals("bar", object.get("b"));
         assertEquals("", object.get("c"));
-        assertEquals("foo bar baz quux", object.get("d"));
+        assertEquals("baz quux", object.get("d"));
     }
 
     @Test
@@ -313,14 +317,11 @@ public class DissectorTest {
         assertEquals("UNKNOWN UNKNOWN N/A(N/A) ge-0/0/0.0", object.getField("rest"));
     }
 
-    @Rule
-    public ExpectedException exception = ExpectedException.none();
-
     @Test
     public void testInvalidAppendIndirectField() {
         String mpp = "%{+&a_field}";
         exception.expect(InvalidFieldException.class);
-        exception.expectMessage("NormalField cannot prefix with both Append and Indirect Prefix (+&): +&a_field");
+        exception.expectMessage("Field cannot prefix with both Append and Indirect Prefix (+&): +&a_field");
         subject(mpp);
     }
 
@@ -328,7 +329,7 @@ public class DissectorTest {
     public void testInvalidIndirectAppendField() {
         String mpp = "%{&+a_field}";
         exception.expect(InvalidFieldException.class);
-        exception.expectMessage("NormalField cannot prefix with both Append and Indirect Prefix (&+): &+a_field");
+        exception.expectMessage("Field cannot prefix with both Append and Indirect Prefix (&+): &+a_field");
         subject(mpp);
     }
 

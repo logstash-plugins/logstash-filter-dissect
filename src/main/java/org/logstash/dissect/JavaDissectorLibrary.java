@@ -18,6 +18,7 @@ import org.jruby.runtime.ObjectAllocator;
 import org.jruby.runtime.ThreadContext;
 import org.jruby.runtime.builtin.IRubyObject;
 import org.jruby.runtime.load.Library;
+import org.logstash.dissect.fields.InvalidFieldException;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -62,19 +63,22 @@ public class JavaDissectorLibrary implements Library {
 
         // def initialize(mapping)
         @JRubyMethod(name = "initialize", required = 1)
-        public IRubyObject ruby_initialize(ThreadContext ctx, IRubyObject mapping) {
-            RubyHash maps = (RubyHash) mapping;
+        public IRubyObject ruby_initialize(ThreadContext ctx, IRubyObject mappings) {
+            RubyHash maps = (RubyHash) mappings;
 
             maps.visitAll(new RubyHash.Visitor() {
                 @Override
                 public void visit(IRubyObject srcField, IRubyObject mapping) {
                     Dissector d;
                     try {
-                        d = new Dissector(mapping.asJavaString());
+                        String javaMapping = mapping.asJavaString();
+                        if (!javaMapping.isEmpty()) {
+                            d = new Dissector(javaMapping);
+                            dissectors.put(srcField.asString(), d);
+                        }
                     } catch (InvalidFieldException e) {
                         throw new RaiseException(e, NativeExceptions.newFieldFormatError(ctx.runtime, e));
                     }
-                    dissectors.put(srcField.asString(), d);
                 }
             });
             return ctx.nil;
@@ -98,7 +102,7 @@ public class JavaDissectorLibrary implements Library {
                     RubyString key = entry.getKey();
                     if (e.includes(key.toString())) {
                         // use ruby event here because we want the bytelist bytes
-                        // from the ruby string without converting to Java
+                        // from the ruby extract without converting to Java
                         RubyString src = re.ruby_get_field(ctx, key).asString();
                         entry.getValue().dissect(src.getBytes(), e);
                     } else {

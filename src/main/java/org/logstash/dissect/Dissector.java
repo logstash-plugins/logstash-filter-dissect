@@ -1,6 +1,10 @@
 package org.logstash.dissect;
 
 import com.logstash.Event;
+import org.logstash.dissect.fields.Field;
+import org.logstash.dissect.fields.FieldComparator;
+import org.logstash.dissect.fields.FieldFactory;
+import org.logstash.dissect.fields.NormalField;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -11,31 +15,30 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Dissector {
-    private final Pattern pattern = Pattern.compile("(.*?)%\\{(.*?)\\}");
+    private final Pattern delimiterFieldPattern = Pattern.compile("(.*?)%\\{(.*?)\\}");
     private final List<Field> fields = new ArrayList<>();
     private final List<Field> saveableFields = new ArrayList<>();
-    private final Map<Field, ValueRef> fieldValueRefMap = new HashMap<>();
     private int initialOffset = 0;
     private Field lastField;
 
     public Dissector(String mapping) {
-        if (mapping.isEmpty()) return;
+        if (mapping.isEmpty()) {
+            throw new IllegalArgumentException("The mapping string cannot be empty");
+        }
 
-        fieldValueRefMap.put(NormalField.getMissing(), new ValueRef());
-        Matcher m = pattern.matcher(mapping);
+        Matcher m = delimiterFieldPattern.matcher(mapping);
 
         for (int i = 0; m.find(); i++) {
-            Delim delim = DelimFactory.create(m.group(1));
+            Delimiter delimiter = DelimiterFactory.create(m.group(1));
             Field field = FieldFactory.create(m.group(2));
             if (fields.size() == 0) {
-                if (!(delim instanceof DelimZero))
-                    initialOffset = delim.size();
+                if (delimiter.size() > 0)
+                    initialOffset = delimiter.size();
             } else {
-                field.addPreviousDelim(delim);
-                fields.get(i - 1).addNextDelim(delim);
+                field.addPreviousDelimiter(delimiter);
+                fields.get(i - 1).addNextDelimiter(delimiter);
             }
             fields.add(i, field);
-            fieldValueRefMap.put(field, new ValueRef());
             if (field.saveable()) {
                 saveableFields.add(field);
             }
@@ -53,34 +56,58 @@ public class Dissector {
         Collections.sort(saveableFields, new FieldComparator());
     }
 
-    public int dissect(byte[] source, Map<String, Object> map) {
-        int pos = dissectValues(source);
-        ValueResolver resolver = new ValueResolver(source, fieldValueRefMap);
+    public int dissect(byte[] source, Map<String, Object> keyValueMap) {
+        ResolveValue resolveValue = resolve(source);
 
         for (Field field : saveableFields) {
-            field.append(map, resolver);
+            field.append(keyValueMap, resolveValue.resolver);
         }
-        return pos;
+        return resolveValue.position;
     }
 
     public int dissect(byte[] source, Event event) {
-        int pos = dissectValues(source);
-        ValueResolver resolver = new ValueResolver(source, fieldValueRefMap);
+        ResolveValue resolveValue = resolve(source);
 
         for (Field field : saveableFields) {
-            field.append(event, resolver);
+            field.append(event, resolveValue.resolver);
         }
-        return pos;
+        return resolveValue.position;
     }
 
-    private int dissectValues(byte[] source) {
-        if (source.length == 0) return 0;
+    private ResolveValue resolve(byte[] source) {
+        final Map<Field, ValueRef> fieldValueRefMap = createFieldValueRefMap();
+        int pos = dissectValues(source, fieldValueRefMap);
+        ValueResolver resolver = new ValueResolver(source, fieldValueRefMap);
+        return new ResolveValue(pos, resolver);
+    }
+
+    private class ResolveValue {
+        private final int position;
+        private final ValueResolver resolver;
+
+        public ResolveValue(int position, ValueResolver resolver) {
+            this.position = position;
+            this.resolver = resolver;
+        }
+    }
+
+    private Map<Field, ValueRef> createFieldValueRefMap() {
+        Map<Field, ValueRef> map = new HashMap<>();
+        map.put(NormalField.getMissing(), new ValueRef(0, 0));
+        return map;
+    }
+
+    private int dissectValues(byte[] source, Map<Field, ValueRef> fieldValueRefMap) {
+        if (source.length == 0) {
+            return 0;
+        }
         int left = initialOffset;
         int pos = initialOffset;
 
         for (Field field : fields) {
-            Delim delim = field.delimiter();
+            Delimiter delim = field.delimiter();
             boolean found = false;
+            fieldValueRefMap.put(field, new ValueRef(0, 0));
             while (!found) {
                 pos = delim.indexOf(source, left);
                 if (pos == left) {
@@ -90,12 +117,15 @@ public class Dissector {
                 }
             }
             if (pos > 0) {
-                fieldValueRefMap.get(field).set(left, pos - left);
+                fieldValueRefMap.put(field, new ValueRef(left, pos - left));
                 left = pos + delim.size();
             }
         }
-        left = pos + lastField.previousDelimSize();
-        fieldValueRefMap.get(lastField).set(left, source.length - left);
+        if (pos > 0) {
+            left = pos + lastField.previousDelimiterSize();
+        }
+        ValueRef valueRef = new ValueRef(left, source.length - left);
+        fieldValueRefMap.put(lastField, valueRef);
         return pos;
     }
 }
