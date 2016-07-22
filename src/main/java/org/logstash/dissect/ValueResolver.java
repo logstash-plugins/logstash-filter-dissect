@@ -5,7 +5,7 @@ import org.logstash.dissect.fields.NormalField;
 
 import java.util.Map;
 
-public class ValueResolver {
+public final class ValueResolver {
     private final byte[] source;
     private final Map<Field, ValueRef> values;
 
@@ -24,6 +24,6 @@ public class ValueResolver {
                 return f;
             }
         }
-        return NormalField.getMissing();
+        return NormalField.MISSING;
     }
 }

@@ -74,6 +74,31 @@ describe LogStash::Filters::Dissect do
     end
   end
 
+  describe "Basic dissection with multibyte Unicode characters" do
+    let(:config) do <<-CONFIG
+      filter {
+        dissect {
+          mapping => {
+            message => "[%{occurred_at}]྿྿྿%{code}྿%{service}྿྿྿྿%{?ic}=%{&ic}%྿྿%{svc_message}"
+          }
+          convert_datatype => {
+            cpu => "float"
+            code => "int"
+          }
+        }
+      }
+    CONFIG
+    end
+
+    sample("message" => "[25/05/16 09:10:38:425 BST]྿྿྿00000001྿SystemOut྿྿྿྿cpu=95.43%྿྿java.lang:type=MemoryPool,name=class storage") do
+      expect(subject.get("occurred_at")).to eq("25/05/16 09:10:38:425 BST")
+      expect(subject.get("code")).to eq(1)
+      expect(subject.get("service")).to eq("SystemOut")
+      expect(subject.get("cpu")).to eq(95.43)
+      expect(subject.get("svc_message")).to eq("java.lang:type=MemoryPool,name=class storage")
+    end
+  end
+
   describe "Basic dissection with failing datatype conversion" do
     subject(:filter) {  LogStash::Filters::Dissect.new(config)  }
 
@@ -184,7 +209,7 @@ describe LogStash::Filters::Dissect do
     context "when field is defined as Append and Indirect (+&)" do
       let(:config)     { {"mapping" => {"message" => "%{+&timestamp}"}}}
       it "raises an error in register" do
-        msg = "org.logstash.dissect.InvalidFieldException: Field cannot prefix with both Append and Indirect Prefix (+&): +&timestamp"
+        msg = "org.logstash.dissect.fields.InvalidFieldException: Field cannot prefix with both Append and Indirect Prefix (+&): +&timestamp"
         expect{filter.register}.to raise_exception(LogStash::FieldFormatError, msg)
       end
     end
@@ -192,13 +217,14 @@ describe LogStash::Filters::Dissect do
     context "when field is defined as Indirect and Append (&+)" do
       let(:config)     { {"mapping" => {"message" => "%{&+timestamp}"}}}
       it "raises an error in register" do
-        msg = "org.logstash.dissect.InvalidFieldException: Field cannot prefix with both Append and Indirect Prefix (&+): &+timestamp"
+        msg = "org.logstash.dissect.fields.InvalidFieldException: Field cannot prefix with both Append and Indirect Prefix (&+): &+timestamp"
         expect{filter.register}.to raise_exception(LogStash::FieldFormatError, msg)
       end
     end
   end
 
-  describe "baseline performance test", :performance => true do
+  # describe "baseline performance test", :performance => true do
+  describe "baseline performance test" do
     event_count = 1000000
     min_rate = 30000
 

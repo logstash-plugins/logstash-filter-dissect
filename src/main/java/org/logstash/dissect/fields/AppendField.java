@@ -1,23 +1,23 @@
 package org.logstash.dissect.fields;
 
 import com.logstash.Event;
+import org.logstash.dissect.Delimiter;
 import org.logstash.dissect.ValueResolver;
 
 import java.util.Map;
 
 public final class AppendField extends AbstractField {
-    private static final int ORD = 2;
 
-    private AppendField(String s, int ord) {
-        super(s, ord);
+    private AppendField(String s, int ord, Delimiter previous, Delimiter next) {
+        super(s, ord, previous, next);
     }
 
-    public static Field create(String s) {
+    public static Field create(String s, Delimiter previous, Delimiter next) {
         if (hasOrdinal(s)) {
-            String[] parts = s.split("/");
-            return new AppendField(parts[0], ORD + Integer.valueOf(parts[1]));
+            String[] parts = s.split("\\W|_");
+            return new AppendField(parts[0], APPEND_ORDINAL_BASE + Integer.valueOf(parts[1]), previous, next);
         } else {
-            return new AppendField(s, ORD);
+            return new AppendField(s, APPEND_ORDINAL_BASE, previous, next);
         }
     }
 
@@ -32,21 +32,26 @@ public final class AppendField extends AbstractField {
 
     @Override
     public void append(Map<String, Object> keyValueMap, ValueResolver values) {
-        if (keyValueMap.containsKey(this.name)) {
-            Object old = keyValueMap.get(this.name);
-            keyValueMap.put(this.name, old.toString() + joinString() + values.get(this));
+        if (keyValueMap.containsKey(this.name())) {
+            Object old = keyValueMap.get(this.name());
+            keyValueMap.put(this.name(), old.toString() + joinString() + values.get(this));
         } else {
-            keyValueMap.put(this.name, values.get(this));
+            keyValueMap.put(this.name(), values.get(this));
         }
     }
 
     @Override
     public void append(Event event, ValueResolver values) {
-        if (event.includes(this.name)) {
-            Object old = event.getField(this.name);
-            event.setField(this.name, old.toString() + joinString() + values.get(this));
+        if (event.includes(this.name())) {
+            Object old = event.getField(this.name());
+            event.setField(this.name(), old.toString() + joinString() + values.get(this));
         } else {
-            event.setField(this.name, values.get(this));
+            event.setField(this.name(), values.get(this));
         }
+    }
+
+    @Override
+    public String toString() {
+        return buildToString(this.getClass().getName());
     }
 }

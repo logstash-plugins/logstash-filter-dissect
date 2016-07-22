@@ -1,18 +1,21 @@
 package org.logstash.dissect.fields;
 
 import com.logstash.Event;
+import org.logstash.dissect.Delimiter;
 import org.logstash.dissect.ValueResolver;
 
 import java.util.Map;
 
 public final class IndirectField extends AbstractField {
 
-    public static Field create(String s) {
-        return new IndirectField(s);
+
+
+    public static Field create(String s, Delimiter previous, Delimiter next) {
+        return new IndirectField(s, previous, next);
     }
 
-    private IndirectField(String s) {
-        super(s, 100);
+    private IndirectField(String s, Delimiter previous, Delimiter next) {
+        super(s, INDIRECT_ORDINAL_HIGHER, previous, next);
     }
 
     @Override
@@ -50,5 +53,10 @@ public final class IndirectField extends AbstractField {
             return String.valueOf(val);
         }
         return values.get(values.find(key, this));
+    }
+
+    @Override
+    public String toString() {
+        return buildToString(this.getClass().getName());
     }
 }

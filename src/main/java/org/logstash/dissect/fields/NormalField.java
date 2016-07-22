@@ -1,27 +1,29 @@
 package org.logstash.dissect.fields;
 
 import com.logstash.Event;
+import org.logstash.dissect.Delimiter;
 import org.logstash.dissect.ValueResolver;
 
 import java.util.Map;
 
 public final class NormalField extends AbstractField {
 
-    private static final Field missing = new NormalField("missing field", 100000);
-    public static Field getMissing() {
-        return missing;
+    public static final Field MISSING = new NormalField("missing_field", MISSING_ORDINAL_HIGHEST);
+
+    public static Field create(String name, Delimiter previous, Delimiter next) {
+        return new NormalField(name, previous, next);
     }
 
-    public static Field create(String s) {
-        return new NormalField(s);
+    private NormalField(String name, int ordinal) {
+        super(name, ordinal);
     }
 
-    private NormalField(String s) {
-        super(s, 1);
+    private NormalField(String name, Delimiter previous, Delimiter next) {
+        super(name, NORMAL_ORDINAL_LOWER, previous, next);
     }
 
-    private NormalField(String s, int ord) {
-        super(s, ord);
+    private NormalField(String name, int ordinal, Delimiter previous, Delimiter next) {
+        super(name, ordinal, previous, next);
     }
 
     @Override
@@ -31,22 +33,16 @@ public final class NormalField extends AbstractField {
 
     @Override
     public void append(Map<String, Object> keyValueMap, ValueResolver values) {
-        keyValueMap.put(this.name, values.get(this));
+        keyValueMap.put(this.name(), values.get(this));
     }
 
     @Override
     public void append(Event event, ValueResolver values) {
-      event.setField(this.name, values.get(this));
+      event.setField(this.name(), values.get(this));
     }
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder("NormalField{");
-        sb.append("name=").append(this.name());
-        sb.append(", ordinal=").append(this.ordinal());
-        sb.append(", join=").append(this.join);
-        sb.append(", next=").append(this.next);
-        sb.append('}');
-        return sb.toString();
+        return buildToString(this.getClass().getName());
     }
 }

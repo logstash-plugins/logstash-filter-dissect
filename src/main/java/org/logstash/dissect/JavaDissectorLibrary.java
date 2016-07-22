@@ -73,7 +73,7 @@ public class JavaDissectorLibrary implements Library {
                     try {
                         String javaMapping = mapping.asJavaString();
                         if (!javaMapping.isEmpty()) {
-                            d = new Dissector(javaMapping);
+                            d = Dissector.create(javaMapping);
                             dissectors.put(srcField.asString(), d);
                         }
                     } catch (InvalidFieldException e) {

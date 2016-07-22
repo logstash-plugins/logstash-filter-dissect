@@ -7,15 +7,39 @@ import org.logstash.dissect.ValueResolver;
 import java.util.Map;
 
 public abstract class AbstractField implements Field {
-    private final int ordinal;
-    protected final String name;
+    /*
+        These ordinal constants establish the saveable field sort order.
+        Skip fields are not saveable so should not be in the saveable fields list but
+        they need an ordinal for construction - so SKIP_ORDINAL_LOWEST is used.
+        The ordering groups field type together regardless of their parsed order.
+        The order within the Normal and Indirect field groups is unimportant.
+        In the Append field group order is important. Each Append fields ordinal
+        is an offset off of APPEND_ORDINAL_BASE.
+     */
+    public static final int SKIP_ORDINAL_LOWEST = 0;
+    public static final int NORMAL_ORDINAL_LOWER = 1;
+    public static final int APPEND_ORDINAL_BASE = 100;
+    public static final int INDIRECT_ORDINAL_HIGHER = 1000;
+    public static final int MISSING_ORDINAL_HIGHEST = 100000;
 
-    protected Delimiter join;
-    protected Delimiter next;
+    private final int ordinal;
+    private final String name;
+
+    private final Delimiter previous;
+    private final Delimiter next;
 
     protected AbstractField(String s, int ord) {
         name = s;
         ordinal = ord;
+        previous = null;
+        next = null;
+    }
+
+    public AbstractField(String name, int ordinal, Delimiter previous, Delimiter next) {
+        this.ordinal = ordinal;
+        this.name = name;
+        this.previous = previous;
+        this.next = next;
     }
 
     @Override
@@ -26,16 +50,6 @@ public abstract class AbstractField implements Field {
 
     @Override
     public abstract void append(Event event, ValueResolver values);
-
-    @Override
-    public void addPreviousDelimiter(Delimiter d) {
-        join = d;
-    }
-
-    @Override
-    public void addNextDelimiter(Delimiter d) {
-        next = d;
-    }
 
     @Override
     public String name() {
@@ -49,21 +63,32 @@ public abstract class AbstractField implements Field {
 
     @Override
     public int previousDelimiterSize() {
-        if (join == null) {
+        if (previous == null) {
             return 0;
         }
-        return join.size();
+        return previous.size();
     }
 
     public String joinString() {
-        if (join == null) {
+        if (previous == null) {
             return " ";
         }
-        return join.delimiterString();
+        return previous.getDelimiter();
     }
 
     @Override
     public Delimiter delimiter() {
         return next;
+    }
+
+    protected String buildToString(String className) {
+        final StringBuilder sb = new StringBuilder(className);
+        sb.append("{");
+        sb.append("name=").append(this.name());
+        sb.append(", ordinal=").append(this.ordinal());
+        sb.append(", previous=").append(this.previous);
+        sb.append(", next=").append(this.next);
+        sb.append('}');
+        return sb.toString();
     }
 }

@@ -1,22 +1,34 @@
 package org.logstash.dissect;
 
-import org.logstash.dissect.search.DelimiterSearchStrategy;
+import org.logstash.dissect.search.DelimiterLocator;
+import org.logstash.dissect.search.DoubleByteLocator;
+import org.logstash.dissect.search.MultiByteLocator;
+import org.logstash.dissect.search.SingleByteLocator;
+import org.logstash.dissect.search.ZeroByteLocator;
 
 public final class Delimiter {
     private final byte[] needle;
     private final String delimiter;
-    private final int size;
-    private DelimiterSearchStrategy strategy;
+    private final DelimiterLocator strategy;
 
-    public Delimiter(String delim) {
-        delimiter = delim;
-        needle = delim.getBytes();
-        size = needle.length;
+    public static Delimiter create(String delim) {
+        byte[] bytes = delim.getBytes();
+        switch (bytes.length) {
+            case 0 :
+                return new Delimiter(delim, bytes, ZeroByteLocator.INSTANCE);
+            case 1 :
+                return new Delimiter(delim, bytes, SingleByteLocator.INSTANCE);
+            case 2 :
+                return new Delimiter(delim, bytes, DoubleByteLocator.INSTANCE);
+            default :
+                return new Delimiter(delim, bytes, MultiByteLocator.INSTANCE);
+        }
     }
 
-    public Delimiter addStrategy(DelimiterSearchStrategy strategy) {
+    private Delimiter(String delimiter, byte[] bytes, DelimiterLocator strategy) {
+        this.delimiter = delimiter;
+        this.needle = bytes;
         this.strategy = strategy;
-        return this;
     }
 
     public int indexOf(byte[] haystack, int offset) {
@@ -24,18 +36,18 @@ public final class Delimiter {
     }
 
     public int size() {
-        return this.size;
+        return this.needle.length;
     }
 
-    public String delimiterString() {
+    public String getDelimiter() {
         return this.delimiter;
     }
 
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("Delimiter{");
-        sb.append("delimiterString='").append(delimiter);
-        sb.append("', size=").append(size);
+        sb.append("delimiter='").append(delimiter);
+        sb.append("', size=").append(size());
         sb.append('}');
         return sb.toString();
     }

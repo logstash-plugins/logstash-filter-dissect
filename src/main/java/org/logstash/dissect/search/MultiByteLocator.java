@@ -1,6 +1,11 @@
 package org.logstash.dissect.search;
 
-public class MultiByteSearchStrategy implements DelimiterSearchStrategy {
+public class MultiByteLocator implements DelimiterLocator {
+    public static MultiByteLocator INSTANCE = new MultiByteLocator();
+
+    private MultiByteLocator() {
+    }
+
     @Override
     public int indexOf(byte[] needle, byte[] haystack, int offset) {
         int localOffset = offset;

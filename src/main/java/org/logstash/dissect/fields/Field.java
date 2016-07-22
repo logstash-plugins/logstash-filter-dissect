@@ -10,8 +10,6 @@ public interface Field {
     void append(Map<String, Object> map, ValueResolver values);
     void append(Event event, ValueResolver values);
     boolean saveable();
-    void addPreviousDelimiter(Delimiter d);
-    void addNextDelimiter(Delimiter d);
     int previousDelimiterSize();
     Delimiter delimiter();
     int ordinal();

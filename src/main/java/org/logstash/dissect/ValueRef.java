@@ -1,5 +1,7 @@
 package org.logstash.dissect;
 
+import java.nio.charset.StandardCharsets;
+
 final class ValueRef {
     private final int position;
     private final int length;
@@ -10,7 +12,7 @@ final class ValueRef {
     }
 
     String extract(byte[] source) {
-        return new String(source, position, length);
+        return new String(source, position, length, StandardCharsets.UTF_8);
     }
 
     @Override

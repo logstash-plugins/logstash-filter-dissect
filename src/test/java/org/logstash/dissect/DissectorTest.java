@@ -19,7 +19,7 @@ import static org.junit.Assert.assertTrue;
 public class DissectorTest {
 
     private Dissector subject(String map) {
-        return new Dissector(map);
+        return Dissector.create(map);
     }
 
     @Rule
@@ -124,12 +124,14 @@ public class DissectorTest {
     @Test
     public void testUnicodeDelim() throws Exception {
         Map<String, Object> object = new HashMap<>();
-        subject("%{a} » %{b}")
-                .dissect("foo » bar baz quux".getBytes(), object);
+        subject("%{a} » %{b}»%{c}€%{d}")
+                .dissect("foo » bar»baz€quux".getBytes("UTF-8"), object);
 
-        assertEquals(2, object.size());
+        assertEquals(4, object.size());
         assertEquals("foo", object.get("a"));
-        assertEquals("bar baz quux", object.get("b"));
+        assertEquals("bar", object.get("b"));
+        assertEquals("baz", object.get("c"));
+        assertEquals("quux", object.get("d"));
     }
 
     @Test

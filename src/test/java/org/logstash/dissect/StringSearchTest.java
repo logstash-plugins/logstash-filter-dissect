@@ -6,7 +6,7 @@ public class StringSearchTest {
     @Test
     public void testIndexOfOneByteSearch() throws Exception {
         byte[] source = "aaa bbb ccc ddd".getBytes();
-        Delimiter delimiter = DelimiterFactory.create(" ");
+        Delimiter delimiter = Delimiter.create(" ");
         int p = delimiter.indexOf(source, 0);
         org.junit.Assert.assertEquals(3, p);
     }
@@ -14,7 +14,7 @@ public class StringSearchTest {
     @Test
     public void testIndexOfOneByteSearchOffset() throws Exception {
         byte[] source = "aaa bbb ccc ddd".getBytes();
-        Delimiter delimiter = DelimiterFactory.create(" ");
+        Delimiter delimiter = Delimiter.create(" ");
         int p = delimiter.indexOf(source, 4);
         org.junit.Assert.assertEquals(7, p);
     }
@@ -22,14 +22,14 @@ public class StringSearchTest {
     @Test
     public void testIndexOfTwoBytesSearch() throws Exception {
         byte[] source = "aaa..bbb...ccc..ddd".getBytes();
-        Delimiter delimiter = DelimiterFactory.create("..");
+        Delimiter delimiter = Delimiter.create("..");
         int p = delimiter.indexOf(source, 0);
         org.junit.Assert.assertEquals(3, p);
     }
     @Test
     public void testIndexOfTwoBytesSearchOffset() throws Exception {
         byte[] source = "aaa..bbb.ccc..ddd".getBytes();
-        Delimiter delimiter = DelimiterFactory.create("..");
+        Delimiter delimiter = Delimiter.create("..");
         int p = delimiter.indexOf(source, 5);
         org.junit.Assert.assertEquals(12, p);
     }
@@ -37,7 +37,7 @@ public class StringSearchTest {
     @Test
     public void testIndexOfBytesSearchOffset() throws Exception {
         byte[] source = "ddd-->eee-->fff-->ggg".getBytes();
-        Delimiter delimiter = DelimiterFactory.create("-->");
+        Delimiter delimiter = Delimiter.create("-->");
         int p = delimiter.indexOf(source, 5);
         org.junit.Assert.assertEquals(9, p);
     }
@@ -45,7 +45,7 @@ public class StringSearchTest {
     @Test
     public void testIndexOfBytesSearchBegin() throws Exception {
         byte[] source = "-->-->fff-->ggg".getBytes();
-        Delimiter delimiter = DelimiterFactory.create("-->");
+        Delimiter delimiter = Delimiter.create("-->");
         int p = delimiter.indexOf(source, 0);
         org.junit.Assert.assertEquals(0, p);
     }
@@ -53,7 +53,7 @@ public class StringSearchTest {
     @Test
     public void testIndexOfBytesSearchBeginOffset() throws Exception {
         byte[] source = "-->-->fff-->ggg".getBytes();
-        Delimiter delimiter = DelimiterFactory.create("-->");
+        Delimiter delimiter = Delimiter.create("-->");
         int p = delimiter.indexOf(source, 3);
         org.junit.Assert.assertEquals(3, p);
     }

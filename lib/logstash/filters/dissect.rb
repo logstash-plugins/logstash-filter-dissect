@@ -84,7 +84,7 @@ require "jruby_dissector"
 # 00000043 ViewReceiver  I
 # 000000b3 Peer          I
 # ........
-# and a dissection of `%{a} %{b} %{c}`; the padding is ignored.
+# and a dissection of `%{a} %{b} %{c}`; the padding is ignored, `event.get([c]) -> "I"`
 #
 # You probably want to put this filter in an if block to ensure that the event
 # contains text with a suitable layout.
