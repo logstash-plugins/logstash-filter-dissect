@@ -1,7 +1,7 @@
 package org.logstash.dissect.search;
 
 public class SingleByteLocator implements DelimiterLocator {
-   public static SingleByteLocator INSTANCE = new SingleByteLocator();
+    public static SingleByteLocator INSTANCE = new SingleByteLocator();
 
     private SingleByteLocator() {
     }

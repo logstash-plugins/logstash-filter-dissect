@@ -11,24 +11,24 @@ public final class Delimiter {
     private final String delimiter;
     private final DelimiterLocator strategy;
 
-    public static Delimiter create(String delim) {
-        byte[] bytes = delim.getBytes();
-        switch (bytes.length) {
-            case 0 :
-                return new Delimiter(delim, bytes, ZeroByteLocator.INSTANCE);
-            case 1 :
-                return new Delimiter(delim, bytes, SingleByteLocator.INSTANCE);
-            case 2 :
-                return new Delimiter(delim, bytes, DoubleByteLocator.INSTANCE);
-            default :
-                return new Delimiter(delim, bytes, MultiByteLocator.INSTANCE);
-        }
-    }
-
     private Delimiter(String delimiter, byte[] bytes, DelimiterLocator strategy) {
         this.delimiter = delimiter;
         this.needle = bytes;
         this.strategy = strategy;
+    }
+
+    public static Delimiter create(String delim) {
+        byte[] bytes = delim.getBytes();
+        switch (bytes.length) {
+            case 0:
+                return new Delimiter(delim, bytes, ZeroByteLocator.INSTANCE);
+            case 1:
+                return new Delimiter(delim, bytes, SingleByteLocator.INSTANCE);
+            case 2:
+                return new Delimiter(delim, bytes, DoubleByteLocator.INSTANCE);
+            default:
+                return new Delimiter(delim, bytes, MultiByteLocator.INSTANCE);
+        }
     }
 
     public int indexOf(byte[] haystack, int offset) {

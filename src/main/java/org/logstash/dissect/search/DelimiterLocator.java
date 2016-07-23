@@ -9,7 +9,7 @@ public interface DelimiterLocator {
      * @param needle   an array of bytes that represents the text being located
      * @param haystack an array of bytes that represents the text being searched in
      * @param offset   a point inside the haystack to start the search from
-     * @return         the position where the first byte of the needle was found
+     * @return the position where the first byte of the needle was found
      */
     int indexOf(byte[] needle, byte[] haystack, int offset);
 }

@@ -40,7 +40,7 @@ public class JavaDissectorLibrary implements Library {
 
         RubyClass runtimeError = runtime.getRuntimeError();
         module.defineClassUnder("FieldFormatError", runtimeError, runtimeError.getAllocator());
-     }
+    }
 
     private static class NativeExceptions {
         public static NativeException newFieldFormatError(Ruby ruby, Throwable cause) {
@@ -50,7 +50,7 @@ public class JavaDissectorLibrary implements Library {
     }
 
     public static class RubyDissect extends RubyObject {
-//        private Dissector dissector;
+        //        private Dissector dissector;
         private HashMap<RubyString, Dissector> dissectors = new HashMap<>();
 
         public RubyDissect(Ruby runtime, RubyClass klass) {
@@ -88,14 +88,14 @@ public class JavaDissectorLibrary implements Library {
         @JRubyMethod(name = "dissect", required = 2)
         public IRubyObject dissect(ThreadContext ctx, IRubyObject arg1, IRubyObject arg2) {
             RubyEvent re = (RubyEvent) arg1;
-            if(re.ruby_cancelled(ctx).isTrue()) {
+            if (re.ruby_cancelled(ctx).isTrue()) {
                 return ctx.nil;
             }
             Event e = re.getEvent();
             RubyObject plugin = (RubyObject) arg2;
             RubyObject logger = (RubyObject) getLoggerObject(ctx, plugin);
             try {
-                if(logLevelEnabled(ctx, logger, "debug")) {
+                if (logLevelEnabled(ctx, logger, "debug")) {
                     logDebug(ctx, logger, "Event before dissection", buildDebugEventMap(ctx, re));
                 }
                 for (Map.Entry<RubyString, Dissector> entry : dissectors.entrySet()) {
@@ -114,7 +114,7 @@ public class JavaDissectorLibrary implements Library {
                 }
                 invoke_conversions(ctx, getMethod(plugin, "convert_datatype"), plugin, re, logger);
                 invoke_filter_matched(ctx, getMethod(plugin, "filter_matched"), plugin, re);
-                if(logLevelEnabled(ctx, logger, "debug")) {
+                if (logLevelEnabled(ctx, logger, "debug")) {
                     logDebug(ctx, logger, "Event after dissection", buildDebugEventMap(ctx, re));
                 }
             } catch (Exception ex) {
@@ -128,7 +128,7 @@ public class JavaDissectorLibrary implements Library {
         @JRubyMethod(name = "dissect_multi", required = 2)
         public IRubyObject dissect_multi(ThreadContext ctx, IRubyObject arg1, IRubyObject arg2) {
             RubyArray events = (RubyArray) arg1;
-            for(IRubyObject event : events.toJavaArray()) {
+            for (IRubyObject event : events.toJavaArray()) {
                 dissect(ctx, event, arg2);
             }
             return ctx.nil;

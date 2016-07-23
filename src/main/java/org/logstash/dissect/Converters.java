@@ -2,7 +2,7 @@ package org.logstash.dissect;
 
 import com.logstash.Event;
 
-public enum Converters implements Converter{
+public enum Converters implements Converter {
     INT {
         public void convert(Event e, String src) {
             Object value = e.getField(src);

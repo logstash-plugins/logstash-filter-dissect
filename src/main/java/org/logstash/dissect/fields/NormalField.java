@@ -10,10 +10,6 @@ public final class NormalField extends AbstractField {
 
     public static final Field MISSING = new NormalField("missing_field", MISSING_ORDINAL_HIGHEST);
 
-    public static Field create(String name, Delimiter previous, Delimiter next) {
-        return new NormalField(name, previous, next);
-    }
-
     private NormalField(String name, int ordinal) {
         super(name, ordinal);
     }
@@ -24,6 +20,10 @@ public final class NormalField extends AbstractField {
 
     private NormalField(String name, int ordinal, Delimiter previous, Delimiter next) {
         super(name, ordinal, previous, next);
+    }
+
+    public static Field create(String name, Delimiter previous, Delimiter next) {
+        return new NormalField(name, previous, next);
     }
 
     @Override
@@ -38,7 +38,7 @@ public final class NormalField extends AbstractField {
 
     @Override
     public void append(Event event, ValueResolver values) {
-      event.setField(this.name(), values.get(this));
+        event.setField(this.name(), values.get(this));
     }
 
     @Override

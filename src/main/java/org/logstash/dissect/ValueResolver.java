@@ -19,8 +19,8 @@ public final class ValueResolver {
     }
 
     public Field find(String name, Field notThis) {
-        for(Field f : values.keySet()) {
-            if(!f.equals(notThis) && name.equals(f.name())) {
+        for (Field f : values.keySet()) {
+            if (!f.equals(notThis) && name.equals(f.name())) {
                 return f;
             }
         }

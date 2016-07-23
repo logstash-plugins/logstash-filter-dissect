@@ -21,13 +21,13 @@ public class Dissector {
     private int initialOffset = 0;
     private Field lastField = NormalField.MISSING;
 
+    private Dissector() {
+    }
+
     public static Dissector create(String mapping) {
         Dissector dissector = new Dissector();
         dissector.handleMapping(mapping);
         return dissector;
-    }
-
-    private Dissector() {
     }
 
     private void handleMapping(String mapping) {
@@ -80,7 +80,7 @@ public class Dissector {
     }
 
     private void createFieldList(List<FieldDelimiterHolder> list) {
-        for(FieldDelimiterHolder holder : list) {
+        for (FieldDelimiterHolder holder : list) {
             Field field = FieldFactory.create(holder.name, holder.previous, holder.next);
             fields.add(field);
             if (field.saveable()) {
@@ -91,24 +91,6 @@ public class Dissector {
         // the saveableFields List is fields List minus the Skip fields
         // sorted so AppendFields are last
         Collections.sort(saveableFields, new FieldComparator());
-    }
-
-    private static class FieldDelimiterHolder {
-        private final String name;
-        private Delimiter previous;
-        private Delimiter next;
-
-        public FieldDelimiterHolder(String name) {
-            this.name = name;
-        }
-
-        public void setPrevious(Delimiter previous) {
-            this.previous = previous;
-        }
-
-        public void setNext(Delimiter next) {
-            this.next = next;
-        }
     }
 
     public int dissect(byte[] source, Map<String, Object> keyValueMap) {
@@ -133,22 +115,6 @@ public class Dissector {
         return pos;
     }
 
-    private ResolvedValue resolve(byte[] source) {
-        final Map<Field, ValueRef> fieldValueRefMap = createFieldValueRefMap();
-        int pos = dissectValues(source, fieldValueRefMap);
-        ValueResolver resolver = new ValueResolver(source, fieldValueRefMap);
-        return new ResolvedValue(pos, resolver);
-    }
-
-    private static class ResolvedValue {
-        private final int position;
-        private final ValueResolver resolver;
-
-        public ResolvedValue(int position, ValueResolver resolver) {
-            this.position = position;
-            this.resolver = resolver;
-        }
-    }
     /*
         An IdentityHashMap is needed here because fields can have the same name and ordinal
         but differ in the identities of next and previous Delimiter instances.
@@ -192,5 +158,23 @@ public class Dissector {
         ValueRef valueRef = new ValueRef(left, source.length - left);
         fieldValueRefMap.put(lastField, valueRef);
         return pos;
+    }
+
+    private static class FieldDelimiterHolder {
+        private final String name;
+        private Delimiter previous;
+        private Delimiter next;
+
+        public FieldDelimiterHolder(String name) {
+            this.name = name;
+        }
+
+        public void setPrevious(Delimiter previous) {
+            this.previous = previous;
+        }
+
+        public void setNext(Delimiter next) {
+            this.next = next;
+        }
     }
 }

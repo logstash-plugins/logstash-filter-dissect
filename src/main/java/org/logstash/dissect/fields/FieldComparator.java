@@ -8,4 +8,3 @@ public final class FieldComparator implements Comparator<Field> {
         return o1.ordinal() - o2.ordinal();
     }
 }
-

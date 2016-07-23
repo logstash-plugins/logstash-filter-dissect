@@ -30,7 +30,7 @@ public class MultiByteLocator implements DelimiterLocator {
         for (int i = sourceOffset + localOffset; i <= max; i++) {
             /* Look for first byte. */
             if (haystack[i] != first) {
-                while (++i <= max && haystack[i] != first);
+                while (++i <= max && haystack[i] != first) ;
             }
 
             /* Found first byte, now look at the rest of v2 */
@@ -38,7 +38,8 @@ public class MultiByteLocator implements DelimiterLocator {
                 int j = i + 1;
                 int end = j + needle.length - 1;
                 for (int k = targetOffset + 1; j < end && haystack[j]
-                        == needle[k]; j++, k++);
+                        == needle[k]; j++, k++)
+                    ;
 
                 if (j == end) {
                     /* Found whole pattern. */

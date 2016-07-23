@@ -15,7 +15,7 @@ public class DissectorErrorUtils {
         // add first two lines anyway
         arr.add(RubyString.newString(ruby, elements[0].toString()));
         arr.add(RubyString.newString(ruby, elements[1].toString()));
-        for(int i = 2; i < elements.length; i++) {
+        for (int i = 2; i < elements.length; i++) {
             String line = elements[i].toString();
             // only add lines referring to our code
             if (line.contains("logstash")) {

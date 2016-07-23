@@ -8,14 +8,12 @@ import java.util.Map;
 
 public final class IndirectField extends AbstractField {
 
-
+    private IndirectField(String s, Delimiter previous, Delimiter next) {
+        super(s, INDIRECT_ORDINAL_HIGHER, previous, next);
+    }
 
     public static Field create(String s, Delimiter previous, Delimiter next) {
         return new IndirectField(s, previous, next);
-    }
-
-    private IndirectField(String s, Delimiter previous, Delimiter next) {
-        super(s, INDIRECT_ORDINAL_HIGHER, previous, next);
     }
 
     @Override
