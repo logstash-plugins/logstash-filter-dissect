@@ -12,7 +12,8 @@ These Rake tasks allow for Gradle to be dependent on Rubygems.
 - `rake bundle_install` - this task calls `bundle install` then puts the output of `bundle show logstash-core` and `bundle show logstash-core-event` into the "gradle.properties" file.
 
 #### Procedure
-Each time a new gem version of `logstash-core-plugin-api` is released we need to run `rake vendor` to verify that any changes to the Java in logstash-core and logstash-core-event have not broken this plugin.
+Each time a new gem version of `logstash-core-plugin-api` is released we need to run `rake vendor` to verify that any changes to the Java in logstash-core and logstash-core-event are still compatible with their usage in this plugin.
+
 Run `rake vendor`
 
 #### Travis
