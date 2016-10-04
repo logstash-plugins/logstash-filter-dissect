@@ -3,7 +3,7 @@ language: ruby
 cache: bundler
 rvm:
   - jruby-1.7.25
-  before_script:
+before_script:
   - rake write_gradle_properties
 script: 
   - bundle exec rspec spec
