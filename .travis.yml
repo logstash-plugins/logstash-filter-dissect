@@ -4,6 +4,6 @@ cache: bundler
 rvm:
   - jruby-1.7.25
 before_script:
-  - bundle exec rake write_gradle_properties
+  - bundle exec rake travis_vendor
 script: 
   - bundle exec rspec spec

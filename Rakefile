@@ -12,6 +12,11 @@ task :vendor => [:bundle_install] do
   `./gradlew vendor`
 end
 
+desc "Compile and vendor java into ruby for travis, its done bundle install already"
+task :travis_vendor => [:write_gradle_properties] do
+  `./gradlew vendor`
+end
+
 desc "Do bundle install and write gradle.properties"
 task :bundle_install do
   `bundle install`
