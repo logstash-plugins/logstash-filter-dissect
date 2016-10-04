@@ -1,8 +1,9 @@
 sudo: false
 language: ruby
 cache: bundler
-install: rake vendor
 rvm:
   - jruby-1.7.25
+  before_script:
+  - rake write_gradle_properties
 script: 
   - bundle exec rspec spec

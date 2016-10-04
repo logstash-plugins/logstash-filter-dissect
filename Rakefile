@@ -24,6 +24,17 @@ task :bundle_install do
   end
 end
 
+desc "Write gradle.properties" # used by travis
+task :write_gradle_properties do
+  lsc_path = `bundle show logstash-core`
+  lsce_path = `bundle show logstash-core-event`
+  rm_f("./gradle.properties")
+  open("./gradle.properties", "w") do |f|
+    f.puts "logstashCoreGemPath=#{lsc_path}"
+    f.puts "logstashCoreEventGemPath=#{lsce_path}"
+  end
+end
+
 spec = Gem::Specification.load('logstash-filter-dissect.gemspec')
 Gem::PackageTask.new(spec) do
   desc 'Package gem'

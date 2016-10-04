@@ -17,7 +17,7 @@ Each time a new gem version of `logstash-core-plugin-api` is released we need to
 Run `rake vendor`
 
 #### Travis
-Travis is set to not use `bundle install` it will use `rake vendor`
+Travis is set to use `rake write_gradle_properties` before its build task
 
 #### More Information
 See the Gradle "vendor" task to understand how the the jar is generated.
