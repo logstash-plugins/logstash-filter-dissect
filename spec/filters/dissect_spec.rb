@@ -26,6 +26,16 @@ describe LogStash::Filters::Dissect do
       @msgs.push(msg[0])
       @hashes.push(msg[1])
     end
+
+    def fatal(*msg)
+      @msgs.push(msg[0])
+      @hashes.push(msg[1])
+    end
+
+    def trace(*msg)
+      @msgs.push(msg[0])
+      @hashes.push(msg[1])
+    end
   end
 
   describe "Basic dissection" do
@@ -117,7 +127,7 @@ describe LogStash::Filters::Dissect do
     let(:loggr)      { LoggerMock.new }
 
     before(:each) do
-      filter.logger = loggr
+      filter.class.instance_variable_set("@logger", loggr)
     end
 
     it "tags and log messages are created" do
@@ -170,7 +180,7 @@ describe LogStash::Filters::Dissect do
     let(:loggr)      { LoggerMock.new }
 
     before(:each) do
-      filter.logger = loggr
+      filter.class.instance_variable_set("@logger", loggr)
     end
 
     it "does not raise any exceptions" do
@@ -187,11 +197,6 @@ describe LogStash::Filters::Dissect do
   describe "valid field format handling" do
     subject(:filter) {  LogStash::Filters::Dissect.new(config)  }
     let(:config)     { {"mapping" => {"message" => "%{+timestamp/2} %{+timestamp/1} %{?no_name} %{&no_name} %{} %{program}[%{pid}]: %{msg}"}}}
-    let(:loggr)      { LoggerMock.new }
-
-    before(:each) do
-      filter.logger = loggr
-    end
 
     it "does not raise an error in register" do
       expect{filter.register}.not_to raise_exception
@@ -200,11 +205,6 @@ describe LogStash::Filters::Dissect do
 
   describe "invalid field format handling" do
     subject(:filter) {  LogStash::Filters::Dissect.new(config)  }
-    let(:loggr)      { LoggerMock.new }
-
-    before(:each) do
-      filter.logger = loggr
-    end
 
     context "when field is defined as Append and Indirect (+&)" do
       let(:config)     { {"mapping" => {"message" => "%{+&timestamp}"}}}
@@ -220,62 +220,6 @@ describe LogStash::Filters::Dissect do
         msg = "org.logstash.dissect.fields.InvalidFieldException: Field cannot prefix with both Append and Indirect Prefix (&+): &+timestamp"
         expect{filter.register}.to raise_exception(LogStash::FieldFormatError, msg)
       end
-    end
-  end
-
-  # describe "baseline performance test", :performance => true do
-  describe "baseline performance test" do
-    event_count = 1000000
-    min_rate = 30000
-
-    max_duration = event_count / min_rate
-    cfg_base = <<-CONFIG
-          input {
-            generator {
-              count => #{event_count}
-              message => "Mar 16 00:01:25 evita postfix/smtpd[1713]: connect from camomile.cloud9.net[168.100.1.3]"
-            }
-          }
-          output { null { } }
-        CONFIG
-
-    config(cfg_base)
-    start = Time.now.to_f
-    agent do
-      duration = (Time.now.to_f - start)
-      puts "\n\ninputs/generator baseline rate: #{"%02.0f/sec" % (event_count / duration)}, elapsed: #{duration}s\n\n"
-      insist { duration } < max_duration
-    end
-  end
-
-  describe "dissect performance test", :performance => true do
-    event_count = 1000000
-    min_rate = 30000
-    max_duration = event_count / min_rate
-
-    cfg_filter = <<-CONFIG
-          input {
-            generator {
-              count => #{event_count}
-              message => "Mar 16 00:01:25 evita postfix/smtpd[1713]: connect from camomile.cloud9.net[168.100.1.3]"
-            }
-          }
-          filter {
-            dissect {
-              mapping => {
-                "message" => "%{timestamp} %{+timestamp} %{+timestamp} %{logsource} %{program}[%{pid}]: %{msg}"
-              }
-            }
-          }
-          output { null { } }
-        CONFIG
-
-    config(cfg_filter)
-    start = Time.now.to_f
-    agent do
-      duration = (Time.now.to_f - start)
-      puts "\n\nfilters/dissect rate: #{"%02.0f/sec" % (event_count / duration)}, elapsed: #{duration}s\n\n"
-      insist { duration } < event_count / min_rate
     end
   end
 end

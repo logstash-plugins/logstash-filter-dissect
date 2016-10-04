@@ -41,7 +41,7 @@ public class DissectorTest {
         assertThat(object.size(), is(equalTo(3)));
         assertEquals("foo", object.get("a"));
         assertEquals("bar", object.get("b"));
-        assertEquals("  baz", object.get("c"));
+        assertEquals("baz", object.get("c"));
     }
 
     @Test
@@ -335,4 +335,14 @@ public class DissectorTest {
         subject(mpp);
     }
 
+    @Test
+    public void testRepeatDelimsArgs() throws Exception {
+        Map<String, Object> object = new HashMap<>();
+        subject("%{a} %{b}-%{c}")
+                .dissect("foo    bar----baz".getBytes(), object);
+        assertThat(object.size(), is(equalTo(3)));
+        assertEquals("foo", object.get("a"));
+        assertEquals("bar", object.get("b"));
+        assertEquals("baz", object.get("c"));
+    }
 }

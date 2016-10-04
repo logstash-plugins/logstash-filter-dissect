@@ -1,4 +1,5 @@
 # encoding: utf-8
+require "forwardable"
 require "logstash/devutils/rspec/spec_helper"
 
 module LogStash::Environment

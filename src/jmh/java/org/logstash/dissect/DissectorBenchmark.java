@@ -57,25 +57,25 @@ public class DissectorBenchmark {
     @State(Scope.Thread)
     public static class DissectOneDelim {
         public static final String SRC = Source.buildSrc(Source.delims1, 10);
-        public static final Dissector DISSECTOR = new Dissector(Source.buildMpp(Source.delims1, 10));
+        public static final Dissector DISSECTOR = Dissector.create(Source.buildMpp(Source.delims1, 10));
     }
 
     @State(Scope.Thread)
     public static class DissectTwoDelims {
         public static final String SRC = Source.buildSrc(Source.delims2, 10);
-        public static final Dissector DISSECTOR = new Dissector(Source.buildMpp(Source.delims2, 10));
+        public static final Dissector DISSECTOR = Dissector.create(Source.buildMpp(Source.delims2, 10));
     }
 
     @State(Scope.Thread)
     public static class DissectLongDelims {
         public static final String SRC = Source.buildSrc(Source.delims3, 10);
-        public static final Dissector DISSECTOR = new Dissector(Source.buildMpp(Source.delims3, 10));
+        public static final Dissector DISSECTOR = Dissector.create(Source.buildMpp(Source.delims3, 10));
     }
 
     @State(Scope.Thread)
     public static class DissectVLongDelims {
         public static final String SRC = Source.buildSrc(Source.delimsX, 10);
-        public static final Dissector DISSECTOR = new Dissector(Source.buildMpp(Source.delimsX, 10));
+        public static final Dissector DISSECTOR = Dissector.create(Source.buildMpp(Source.delimsX, 10));
     }
 
     @State(Scope.Thread)

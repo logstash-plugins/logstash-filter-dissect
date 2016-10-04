@@ -1,3 +1,6 @@
+### NOTE
+Please read BUILD_INSTRUCTIONS.md
+
 # Logstash Plugin
 
 [![Travis Build Status](https://travis-ci.org/logstash-plugins/logstash-filter-example.svg)](https://travis-ci.org/logstash-plugins/logstash-filter-example)

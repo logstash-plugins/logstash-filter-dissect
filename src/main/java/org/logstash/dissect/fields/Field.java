@@ -13,9 +13,9 @@ public interface Field {
 
     boolean saveable();
 
-    int previousDelimiterSize();
+    Delimiter nextDelimiter();
 
-    Delimiter delimiter();
+    Delimiter previousDelimiter();
 
     int ordinal();
 

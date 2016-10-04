@@ -61,14 +61,6 @@ public abstract class AbstractField implements Field {
         return ordinal;
     }
 
-    @Override
-    public int previousDelimiterSize() {
-        if (previous == null) {
-            return 0;
-        }
-        return previous.size();
-    }
-
     public String joinString() {
         if (previous == null) {
             return " ";
@@ -77,8 +69,13 @@ public abstract class AbstractField implements Field {
     }
 
     @Override
-    public Delimiter delimiter() {
+    public Delimiter nextDelimiter() {
         return next;
+    }
+
+    @Override
+    public Delimiter previousDelimiter() {
+        return previous;
     }
 
     protected String buildToString(String className) {
