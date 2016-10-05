@@ -123,6 +123,7 @@ task vendor << {
     File projectJarFile = file("${vendorPathPrefix}/${projectGroupPath}/${project.name}/${project.version}/${project.name}-${project.version}.jar")
     projectJarFile.mkdirs()
     Files.copy(file("$buildDir/libs/${project.name}-${project.version}.jar").toPath(), projectJarFile.toPath(), REPLACE_EXISTING)
+    println "-----------------> Vendored jar to: ${projectJarFile.getCanonicalPath()}"
 }
 
 vendor.dependsOn(jar, generateGemJarRequiresFile)
