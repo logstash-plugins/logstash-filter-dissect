@@ -1,6 +1,6 @@
 package org.logstash.dissect.fields;
 
-import com.logstash.Event;
+import org.logstash.Event;
 import org.logstash.dissect.Delimiter;
 import org.logstash.dissect.ValueResolver;
 

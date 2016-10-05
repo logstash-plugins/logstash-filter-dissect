@@ -1,6 +1,6 @@
 package org.logstash.dissect;
 
-import com.logstash.Event;
+import org.logstash.Event;
 import org.logstash.dissect.fields.Field;
 import org.logstash.dissect.fields.FieldComparator;
 import org.logstash.dissect.fields.FieldFactory;

@@ -1,6 +1,6 @@
 package org.logstash.dissect;
 
-import com.logstash.Event;
+import org.logstash.Event;
 
 public enum Converters implements Converter {
     INT {

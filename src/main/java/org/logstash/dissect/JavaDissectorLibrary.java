@@ -1,7 +1,7 @@
 package org.logstash.dissect;
 
-import com.logstash.Event;
-import com.logstash.ext.JrubyEventExtLibrary.RubyEvent;
+import org.logstash.Event;
+import org.logstash.ext.JrubyEventExtLibrary.RubyEvent;
 import org.jruby.NativeException;
 import org.jruby.Ruby;
 import org.jruby.RubyArray;

@@ -1,6 +1,6 @@
 package org.logstash.dissect;
 
-import com.logstash.Event;
+import org.logstash.Event;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
