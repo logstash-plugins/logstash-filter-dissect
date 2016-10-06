@@ -39,6 +39,8 @@ end
 RSpec::Core::RakeTask.new(:spec)
 task :check => [:vendor, :spec]
 
+task :travis_test => [:travis_vendor, :spec]
+
 def delete_create_gradle_properties
   root_dir = File.dirname(__FILE__)
   gradle_properties_file = "#{root_dir}/gradle.properties"
