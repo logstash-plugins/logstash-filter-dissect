@@ -7,9 +7,9 @@ vendor
 # build dirs
 build
 .gradle
-gradle
 
 # Intellij
 .idea
 *.iml
-logstash-core-event-java.jar
+
+gradle.properties

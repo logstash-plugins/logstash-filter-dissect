@@ -1,8 +1,10 @@
+DISSECT_VERSION = File.read(File.expand_path(File.join(File.dirname(__FILE__), "VERSION"))).strip unless defined?(DISSECT_VERSION)
+
 Gem::Specification.new do |s|
-  s.name = 'logstash-filter-example'
-  s.version = '1.0.0'
+  s.name = 'logstash-filter-dissect'
+  s.version = DISSECT_VERSION
   s.licenses = ['Apache License (2.0)']
-  s.summary = "This example filter replaces the contents of the message field with the specified value."
+  s.summary = "This dissect filter will de-structure text into multiple fields."
   s.description = "This gem is a Logstash plugin required to be installed on top of the Logstash core pipeline using $LS_HOME/bin/logstash-plugin install gemname. This gem is not a stand-alone program"
   s.authors = ["Elastic"]
   s.email = 'info@elastic.co'
@@ -18,6 +20,9 @@ Gem::Specification.new do |s|
   s.metadata = { "logstash_plugin" => "true", "logstash_group" => "filter" }
 
   # Gem dependencies
-  s.add_runtime_dependency "logstash-core-plugin-api", "~> 2.0"
+  s.add_runtime_dependency 'logstash-core-plugin-api', '>= 2.1.1', '<= 2.99'
+  s.add_runtime_dependency 'jar-dependencies'
+
+  s.add_development_dependency 'rspec'
   s.add_development_dependency 'logstash-devutils'
 end
