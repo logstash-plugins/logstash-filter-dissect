@@ -34,6 +34,8 @@ description = """Dissect Filter, a Logstash plugin - the Java parts"""
 
 project.sourceCompatibility = 1.8
 
+compileJava.options.encoding = 'UTF-8'
+
 task sourcesJar(type: Jar, dependsOn: classes) {
     from sourceSets.main.allSource
     classifier 'sources'
@@ -112,13 +114,6 @@ task generateGemJarRequiresFile << {
 
 task vendor << {
     String vendorPathPrefix = "vendor/jars"
-    configurations.runtime.allDependencies.each { dep ->
-        File f = configurations.runtime.filter { it.absolutePath.contains("${dep.group}/${dep.name}/${dep.version}") }.singleFile
-        String groupPath = dep.group.replaceAll('\\.', '/')
-        File newJarFile = file("${vendorPathPrefix}/${groupPath}/${dep.name}/${dep.version}/${dep.name}-${dep.version}.jar")
-        newJarFile.mkdirs()
-        Files.copy(f.toPath(), newJarFile.toPath(), REPLACE_EXISTING)
-    }
     String projectGroupPath = project.group.replaceAll('\\.', '/')
     File projectJarFile = file("${vendorPathPrefix}/${projectGroupPath}/${project.name}/${project.version}/${project.name}-${project.version}.jar")
     projectJarFile.mkdirs()
