@@ -1,3 +1,30 @@
+## Description
+
+However, if the structure of your text varies from line to line then Grok is more suitable. There is a hybrid case where Dissect can be used to de-structure the section of the line that is reliably repeated and then Grok can be used on the remaining field values with  more regex predictability and less overall work to do. +
+
+A set of fields and delimiters is called a *dissection*.
+
+The dissection is described using a set of `%{}` sections:
+....
+%{a} - %{b} - %{c}
+....
+
+A *field* is the text from `%` to `}` inclusive.
+
+A *delimiter* is the text between `}` and `%` characters. Delimiters can't contain these `}{%` characters.
+
+The config might look like this:
+
+```
+ filter {
+   dissect {
+     mapping => {
+       "message" => "%{ts} %{+ts} %{+ts} %{src} %{} %{prog}[%{pid}]: %{msg}"
+     }
+   }
+ }
+```
+
 ### NOTE
 Please read BUILD_INSTRUCTIONS.md
 
