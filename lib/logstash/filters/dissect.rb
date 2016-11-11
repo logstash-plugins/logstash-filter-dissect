@@ -80,7 +80,7 @@ require "jruby_dissector"
 # The found value is added to the Event using the found value of another field as the key. +
 # The key is prefixed with a `&`. +
 # `%{&some_field}` - an indirect field where the key is indirectly sourced from the value of `some_field`. +
-# e.g. for a text of `error: some_error, some_description`, this `error: %{?err}, %{&err}` will build a key/value of `some_error => description`.
+# e.g. for a text of `error: some_error, some_description`, this `error: %{?err}, %{&err}` will build a key/value of `some_error => some_description`.
 #
 # [NOTE]
 # for append and indirect field the key can refer to a field that already exists in the event before dissection.
