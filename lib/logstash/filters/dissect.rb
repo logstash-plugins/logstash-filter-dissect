@@ -6,8 +6,6 @@ require "java"
 require "jruby-dissect-library_jars"
 require "jruby_dissector"
 
-# ==== *Dissect or how to de-structure text*
-#
 # The Dissect filter is a kind of split operation. Unlike a regular split operation where one delimiter is applied to the whole string, this operation applies a set of delimiters # to a string value. +
 # Dissect does not use regular expressions and is very fast. +
 # However, if the structure of your text varies from line to line then Grok is more suitable. +
