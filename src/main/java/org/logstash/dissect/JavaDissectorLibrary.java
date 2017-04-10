@@ -11,6 +11,7 @@ import org.jruby.RubyHash;
 import org.jruby.RubyModule;
 import org.jruby.RubyObject;
 import org.jruby.RubyString;
+import org.jruby.RubySymbol;
 import org.jruby.anno.JRubyMethod;
 import org.jruby.exceptions.RaiseException;
 import org.jruby.internal.runtime.methods.DynamicMethod;
@@ -53,8 +54,13 @@ public class JavaDissectorLibrary implements Library {
         //        private Dissector dissector;
         private HashMap<RubyString, Dissector> dissectors = new HashMap<>();
 
+        private RubySymbol matchesMetricSymbol;
+        private RubySymbol failuresMetricSymbol;
+
         public RubyDissect(Ruby runtime, RubyClass klass) {
             super(runtime, klass);
+            matchesMetricSymbol = RubySymbol.newSymbol(runtime, "matches");
+            failuresMetricSymbol = RubySymbol.newSymbol(runtime, "failures");
         }
 
         public RubyDissect(Ruby runtime) {
@@ -114,11 +120,13 @@ public class JavaDissectorLibrary implements Library {
                 }
                 invoke_conversions(ctx, getMethod(plugin, "convert_datatype"), plugin, re, logger);
                 invoke_filter_matched(ctx, getMethod(plugin, "filter_matched"), plugin, re);
+                invoke_metric_increment(ctx, getMethod(plugin, "metric_increment"), plugin, this.matchesMetricSymbol);
                 if (logLevelEnabled(ctx, logger, "debug")) {
                     logDebug(ctx, logger, "Event after dissection", buildDebugEventMap(ctx, re));
                 }
             } catch (Exception ex) {
                 addTags(ctx, plugin, e);
+                invoke_metric_increment(ctx, getMethod(plugin, "metric_increment"), plugin, this.failuresMetricSymbol);
                 logException(ctx, logger, ex);
             }
             return ctx.nil;
@@ -190,6 +198,13 @@ public class JavaDissectorLibrary implements Library {
                 for (IRubyObject t : tags.toJavaArray()) {
                     event.tag(t.toString());
                 }
+            }
+            return ctx.nil;
+        }
+
+        private IRubyObject invoke_metric_increment(ThreadContext ctx, DynamicMethod m, RubyObject plugin, RubySymbol metric) {
+            if (!m.isUndefined()) {
+                return m.call(ctx, plugin, plugin.getMetaClass(), "filter_matched", metric);
             }
             return ctx.nil;
         }

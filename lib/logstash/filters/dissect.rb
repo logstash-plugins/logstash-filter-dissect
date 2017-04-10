@@ -182,4 +182,8 @@ module LogStash module Filters class Dissect < LogStash::Filters::Base
     @dissector.dissect_multi(events, self)
     events
   end
+
+  def metric_increment(metric_name)
+    metric.increment(metric_name)
+  end
 end end end

@@ -222,4 +222,56 @@ describe LogStash::Filters::Dissect do
       end
     end
   end
+
+  describe "metrics tracking" do
+
+    let(:options) { { "mapping" => { "message" => "%{a} %{b}" } } }
+    subject { described_class.new(options) }
+
+    before(:each) { subject.register }
+
+    context "when match is successful" do
+      let(:event) { LogStash::Event.new("message" => "1 2") }
+
+      it "should increment the matches metric" do
+        expect(subject).to receive(:metric_increment).once.with(:matches)
+        subject.filter(event)
+      end
+    end
+
+    context "when match is not successful" do
+      let(:event) { LogStash::Event.new("message" => "") }
+
+      it "should increment the failures metric" do
+        expect(subject).to receive(:metric_increment).once.with(:failures)
+        subject.filter(event)
+      end
+    end
+  end
+
+  describe "Basic dissection" do
+
+    let(:options) { { "mapping" => { "message" => "%{a} %{b}" } } }
+    subject { described_class.new(options) }
+    let(:event) { LogStash::Event.new(event_data) }
+
+    before(:each) do
+      subject.register
+      subject.filter(event)
+    end
+
+    context "when no field" do
+      let(:event_data) { {} }
+      it "should not add tags to the event" do
+        expect(event.get("tags")).to be_nil
+      end
+    end
+
+    context "when field is empty" do
+      let(:event_data) { { "message" => "" } }
+      it "should add tags to the event" do
+        expect(event.get("tags")).to include("_dissectfailure")
+      end
+    end
+  end
 end
