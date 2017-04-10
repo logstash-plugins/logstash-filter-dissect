@@ -1,5 +1,6 @@
 ## 1.0.9
  - Docs: Fix doc generation error by removing illegal heading
+ - Add metrics to track the number of matches and failures
 
 ## 1.0.8
  - Add "vendor/jars" to require_paths in gemspec
