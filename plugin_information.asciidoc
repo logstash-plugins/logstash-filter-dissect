@@ -1,0 +1,4 @@
+<!-- GENERATED FILE DO NOT EDIT -->
+* Version: %{VERSION}%
+* Released on: %{RELEASE_DATE}%
+* %{CHANGELOG_URL}%[Changelog]
