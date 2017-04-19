@@ -1,0 +1,16 @@
+:default_plugin: 0
+
+//////////////////////////////////////////
+GENERATED FILE DO NOT EDIT
+//////////////////////////////////////////
+* Version: %\{VERSION\}
+* Released on: %\{RELEASE_DATE\}
+* %\{CHANGELOG_URL\}[Changelog]
+
+ifeval::[{default_plugin} == 0]
+
+==== Installation
+
+For plugins not bundled by default, it is easy to install by running +bin/logstash-plugin install logstash-{type}-{plugin}+. See <<working-with-plugins>> for more details.
+
+endif::[]
