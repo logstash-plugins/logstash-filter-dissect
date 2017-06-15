@@ -88,9 +88,8 @@ idea {
 // the gradle.properties file is built by the Rake task bundle_install
 // See BUILD_INSTRUCTIONS.md
 dependencies {
-    provided 'org.jruby:jruby-core:1.7.25'
+    provided 'org.jruby:jruby-core:9.1.9.0'
     provided fileTree(dir: logstashCoreGemPath, include: '**/*.jar')
-    provided fileTree(dir: logstashCoreEventGemPath, include: '**/*.jar')
     testCompile 'junit:junit:4.12'
 }
 

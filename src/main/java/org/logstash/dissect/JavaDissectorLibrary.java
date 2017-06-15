@@ -72,7 +72,7 @@ public class JavaDissectorLibrary implements Library {
         public IRubyObject ruby_initialize(ThreadContext ctx, IRubyObject mappings) {
             RubyHash maps = (RubyHash) mappings;
 
-            maps.visitAll(new RubyHash.Visitor() {
+            maps.visitAll(ctx, new RubyHash.Visitor() {
                 @Override
                 public void visit(IRubyObject srcField, IRubyObject mapping) {
                     Dissector d;
@@ -86,7 +86,7 @@ public class JavaDissectorLibrary implements Library {
                         throw new RaiseException(e, NativeExceptions.newFieldFormatError(ctx.runtime, e));
                     }
                 }
-            });
+            }, null);
             return ctx.nil;
         }
 
@@ -150,7 +150,7 @@ public class JavaDissectorLibrary implements Library {
             if (!m.isUndefined()) {
                 Event javaEvent = event.getEvent();
                 RubyHash conversions = (RubyHash) m.call(ctx, plugin, plugin.getMetaClass(), "convert_datatype");
-                conversions.visitAll(new RubyHash.Visitor() {
+                conversions.visitAll(ctx, new RubyHash.Visitor() {
                     @Override
                     public void visit(IRubyObject srcField, IRubyObject toType) {
                         String src = srcField.asJavaString();
@@ -175,7 +175,7 @@ public class JavaDissectorLibrary implements Library {
                             logWarn(ctx, logger, "Dissector datatype conversion, datatype not supported: " + newType, null);
                         }
                     }
-                });
+                }, null);
             }
             return ctx.nil;
         }
