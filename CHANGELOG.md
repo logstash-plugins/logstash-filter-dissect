@@ -1,3 +1,6 @@
+## 1.0.10
+ - Fix gradle now that Event has been moved into Logstash Core
+
 ## 1.0.9
  - Docs: Fix doc generation error by removing illegal heading
  - Add metrics to track the number of matches and failures

@@ -90,7 +90,6 @@ idea {
 dependencies {
     provided 'org.jruby:jruby-core:1.7.25'
     provided fileTree(dir: logstashCoreGemPath, include: '**/*.jar')
-    provided fileTree(dir: logstashCoreEventGemPath, include: '**/*.jar')
     testCompile 'junit:junit:4.12'
 }
 
