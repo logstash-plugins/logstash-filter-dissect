@@ -1,5 +1,6 @@
 package org.logstash.dissect;
 
+import org.junit.Ignore;
 import org.logstash.Event;
 import org.junit.Rule;
 import org.junit.Test;
@@ -122,6 +123,7 @@ public class DissectorTest {
      }
 
     @Test
+    @Ignore("https://github.com/logstash-plugins/logstash-filter-dissect/issues/23")
     public void testUnicodeDelim() throws Exception {
         Map<String, Object> object = new HashMap<>();
         subject("%{a} » %{b}»%{c}€%{d}")
