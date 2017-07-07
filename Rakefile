@@ -9,13 +9,13 @@ require 'rspec/core/rake_task'
 
 desc "Compile and vendor java into ruby"
 task :vendor => [:bundle_install] do
-  sh("./gradlew check vendor")
+  exit(1) unless system './gradlew check vendor'
   puts "-------------------> vendored dissect jar via rake"
 end
 
 desc "Compile and vendor java into ruby for travis, its done bundle install already"
 task :travis_vendor => [:write_gradle_properties] do
-  sh("./gradlew check vendor")
+  exit(1) unless system './gradlew check vendor'
   puts "-------------------> vendored dissect jar via rake"
 end
 
@@ -52,5 +52,3 @@ def delete_create_gradle_properties
   puts "-------------------> Wrote #{gradle_properties_file}"
   puts `cat #{gradle_properties_file}`
 end
-
-
