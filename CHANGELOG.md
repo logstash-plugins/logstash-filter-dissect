@@ -1,3 +1,6 @@
+## 1.0.11
+ - Fix gemspec to include vendor/jars
+
 ## 1.0.10
  - Fix gradle now that Event has been moved into Logstash Core
  - Exit on gradle failures to help protect against bad releases 
