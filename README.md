@@ -1,7 +1,7 @@
 ## Description
 
 Dissect filter is an alternative to Grok filter and can be used to extract structured fields from an unstructured line.
-However, if the structure of your text varies from line to line then Grok is more suitable. There is a hybrid case where Dissect can be used to de-structure the section of the line that is reliably repeated and then Grok can be used on the remaining field values with  more regex predictability and less overall work to do.
+However, if the structure of your text varies from line to line then Grok is more suitable. There is a hybrid case where Dissect can be used to de-structure the section of the line that is reliably repeated and then Grok can be used on the remaining field fieldValues with  more regex predictability and less overall work to do.
 
 A set of fields and delimiters is called a *dissection*.
 

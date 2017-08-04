@@ -3,47 +3,13 @@ require 'spec_helper'
 require "logstash/filters/dissect"
 
 describe LogStash::Filters::Dissect do
-  class LoggerMock
-    attr_reader :msgs, :hashes
-    def initialize()
-      @msgs = []
-      @hashes = []
-    end
-
-    def error(*msg)
-      @msgs.push(msg[0])
-      @hashes.push(msg[1])
-    end
-
-    def warn(*msg)
-      @msgs.push(msg[0])
-      @hashes.push(msg[1])
-    end
-
-    def debug?() true; end
-
-    def debug(*msg)
-      @msgs.push(msg[0])
-      @hashes.push(msg[1])
-    end
-
-    def fatal(*msg)
-      @msgs.push(msg[0])
-      @hashes.push(msg[1])
-    end
-
-    def trace(*msg)
-      @msgs.push(msg[0])
-      @hashes.push(msg[1])
-    end
-  end
 
   describe "Basic dissection" do
     let(:config) do <<-CONFIG
       filter {
         dissect {
           mapping => {
-            message => "[%{occurred_at}] %{code} %{service} %{ic} %{svc_message}"
+            message => "[%{occurred_at}] %{code} %{service->} %{ic} %{svc_message}"
           }
         }
       }
@@ -56,6 +22,31 @@ describe LogStash::Filters::Dissect do
       expect(subject.get("service")).to eq("SystemOut")
       expect(subject.get("ic")).to eq("O")
       expect(subject.get("svc_message")).to eq("java.lang:type=MemoryPool,name=class storage")
+      expect(subject.get("tags")).to be_nil
+    end
+  end
+
+  describe "Basic dissection, like CSV with missing fields" do
+    let(:config) do <<-CONFIG
+      filter {
+        dissect {
+          mapping => {
+            message => '[%{occurred_at}] %{code} %{service} values: "%{v1}","%{v2}","%{v3}"%{rest}'
+          }
+        }
+      }
+    CONFIG
+    end
+
+    sample("message" => '[25/05/16 09:10:38:425 BST] 00000001 SystemOut values: "f1","","f3"') do
+      expect(subject.get("occurred_at")).to eq("25/05/16 09:10:38:425 BST")
+      expect(subject.get("code")).to eq("00000001")
+      expect(subject.get("service")).to eq("SystemOut")
+      expect(subject.get("v1")).to eq("f1")
+      expect(subject.get("v2")).to eq("")
+      expect(subject.get("v3")).to eq("f3")
+      expect(subject.get("rest")).to eq("")
+      expect(subject.get("tags")).to be_nil
     end
   end
 
@@ -124,26 +115,13 @@ describe LogStash::Filters::Dissect do
       }
     end
     let(:event)      { LogStash::Event.new("message" => message, "other" => {}) }
-    let(:loggr)      { LoggerMock.new }
-
-    before(:each) do
-      filter.class.instance_variable_set("@logger", loggr)
-    end
 
     it "tags and log messages are created" do
       filter.register
       filter.filter(event)
       expect(event.get("code")).to eq("00000001")
       expect(event.get("tags")).to eq(["_dataconversionnullvalue_ccu_float", "_dataconversionmissing_code_integer", "_dataconversionuncoercible_other_int"])
-      expect(loggr.msgs).to eq(
-          [
-              "Event before dissection",
-              "Dissector datatype conversion, value cannot be coerced, key: ccu, value: null",
-              "Dissector datatype conversion, datatype not supported: integer",
-              "Dissector datatype conversion, value cannot be coerced, key: other, value: {}",
-              "Event after dissection"
-          ]
-      )
+      # Logging moved to java can't mock ruby logger anymore
     end
   end
 
@@ -177,11 +155,6 @@ describe LogStash::Filters::Dissect do
     let(:message)    { "very random message :-)" }
     let(:config)     { {"mapping" => {"blah-di-blah" => "%{timestamp} %{+timestamp}"}} }
     let(:event)      { LogStash::Event.new("message" => message) }
-    let(:loggr)      { LoggerMock.new }
-
-    before(:each) do
-      filter.class.instance_variable_set("@logger", loggr)
-    end
 
     it "does not raise any exceptions" do
       expect{filter.register}.not_to raise_exception
@@ -189,8 +162,8 @@ describe LogStash::Filters::Dissect do
 
     it "dissect failure key missing is logged" do
       filter.register
-      filter.filter(event)
-      expect(loggr.msgs).to eq(["Event before dissection", "Dissector mapping, key not found in event", "Event after dissection"])
+      expect{filter.filter(event)}.not_to raise_exception
+      # Logging moved to java, can't Mock Logger
     end
   end
 
@@ -209,7 +182,7 @@ describe LogStash::Filters::Dissect do
     context "when field is defined as Append and Indirect (+&)" do
       let(:config)     { {"mapping" => {"message" => "%{+&timestamp}"}}}
       it "raises an error in register" do
-        msg = "org.logstash.dissect.fields.InvalidFieldException: Field cannot prefix with both Append and Indirect Prefix (+&): +&timestamp"
+        msg = /\Aorg\.logstash\.dissect\.fields\.InvalidFieldException: Field cannot prefix with both Append and Indirect Prefix .+/
         expect{filter.register}.to raise_exception(LogStash::FieldFormatError, msg)
       end
     end
@@ -217,7 +190,7 @@ describe LogStash::Filters::Dissect do
     context "when field is defined as Indirect and Append (&+)" do
       let(:config)     { {"mapping" => {"message" => "%{&+timestamp}"}}}
       it "raises an error in register" do
-        msg = "org.logstash.dissect.fields.InvalidFieldException: Field cannot prefix with both Append and Indirect Prefix (&+): &+timestamp"
+        msg = /\Aorg\.logstash\.dissect\.fields\.InvalidFieldException: Field cannot prefix with both Append and Indirect Prefix .+/
         expect{filter.register}.to raise_exception(LogStash::FieldFormatError, msg)
       end
     end
@@ -270,7 +243,9 @@ describe LogStash::Filters::Dissect do
     context "when field is empty" do
       let(:event_data) { { "message" => "" } }
       it "should add tags to the event" do
-        expect(event.get("tags")).to include("_dissectfailure")
+        tags = event.get("tags")
+        expect(tags).not_to be_nil
+        expect(tags).to include("_dissectfailure")
       end
     end
   end

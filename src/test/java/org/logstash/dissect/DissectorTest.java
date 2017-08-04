@@ -1,12 +1,14 @@
 package org.logstash.dissect;
 
+
 import org.junit.Ignore;
-import org.logstash.Event;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.logstash.Event;
 import org.logstash.dissect.fields.InvalidFieldException;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -19,7 +21,7 @@ import static org.junit.Assert.assertTrue;
 
 public class DissectorTest {
 
-    private Dissector subject(String map) {
+    private Dissector subject(final String map) {
         return Dissector.create(map);
     }
 
@@ -27,8 +29,19 @@ public class DissectorTest {
     public ExpectedException exception = ExpectedException.none();
 
     @Test
+    @Ignore("Skipping scratch pad Java 8 streaming experiment")
+    public void scratch() throws Exception {
+        try {
+            subject("");
+        } catch (Throwable ex) {
+            String est = String.join(", ", Arrays.stream(ex.getStackTrace()).limit(4).map(StackTraceElement::toString).toArray(String[]::new));
+            System.out.println(est);
+        }
+    }
+
+    @Test
     public void testEmptyArgs() throws Exception {
-        Map<String, Object> object = new HashMap<>();
+        final Map<String, Object> object = new HashMap<>();
         exception.expect(IllegalArgumentException.class);
         exception.expectMessage("The mapping string cannot be empty");
         subject("");
@@ -36,8 +49,8 @@ public class DissectorTest {
 
     @Test
     public void testBasicArgs() throws Exception {
-        Map<String, Object> object = new HashMap<>();
-        subject("%{a} %{b} %{c}")
+        final Map<String, Object> object = new HashMap<>();
+        subject("%{a} %{b->} %{c}")
                 .dissect("foo bar   baz".getBytes(), object);
         assertThat(object.size(), is(equalTo(3)));
         assertEquals("foo", object.get("a"));
@@ -47,7 +60,7 @@ public class DissectorTest {
 
     @Test
     public void testMissingDelimBegin() throws Exception {
-        Map<String, Object> object = new HashMap<>();
+        final Map<String, Object> object = new HashMap<>();
         subject("%{a}%{b} %{c}")
                 .dissect("foo bar   baz".getBytes(), object);
         assertEquals(3, object.size());
@@ -58,7 +71,7 @@ public class DissectorTest {
 
     @Test
     public void testMissingDelimMiddle() throws Exception {
-        Map<String, Object> object = new HashMap<>();
+        final Map<String, Object> object = new HashMap<>();
         subject("%{a} %{b}%{c} %{d}")
                 .dissect("foo bar baz".getBytes(), object);
         assertEquals(4, object.size());
@@ -67,9 +80,10 @@ public class DissectorTest {
         assertEquals("bar", object.get("c"));
         assertEquals("baz", object.get("d"));
     }
+
     @Test
     public void testMissingDelimEnd() throws Exception {
-        Map<String, Object> object = new HashMap<>();
+        final Map<String, Object> object = new HashMap<>();
         subject("%{a} %{b} %{c}%{d}")
                 .dissect("foo bar baz quux".getBytes(), object);
         assertEquals(4, object.size());
@@ -81,7 +95,7 @@ public class DissectorTest {
 
     @Test
     public void testBasicArgsWithSkip() throws Exception {
-        Map<String, Object> object = new HashMap<>();
+        final Map<String, Object> object = new HashMap<>();
         subject("%{a} %{} %{c}")
                 .dissect("foo bar baz".getBytes(), object);
         assertEquals(2, object.size());
@@ -91,7 +105,7 @@ public class DissectorTest {
 
     @Test
     public void testAppendArgs() throws Exception {
-        Map<String, Object> object = new HashMap<>();
+        final Map<String, Object> object = new HashMap<>();
         subject("%{a} %{b} %{+b} %{z}")
                 .dissect("foo bar baz quux".getBytes(), object);
 
@@ -103,7 +117,7 @@ public class DissectorTest {
 
     @Test
     public void testRestArgs() throws Exception {
-        Map<String, Object> object = new HashMap<>();
+        final Map<String, Object> object = new HashMap<>();
         subject("%{a}------->%{b}")
                 .dissect("foo------->bar baz quux".getBytes(), object);
 
@@ -113,7 +127,7 @@ public class DissectorTest {
     }
     @Test
     public void testEmptyRestArgs() throws Exception {
-        Map<String, Object> object = new HashMap<>();
+        final Map<String, Object> object = new HashMap<>();
         subject("%{a}------->%{}")
                 .dissect("foo------->bar baz quux".getBytes(), object);
 
@@ -125,7 +139,7 @@ public class DissectorTest {
     @Test
     @Ignore("https://github.com/logstash-plugins/logstash-filter-dissect/issues/23")
     public void testUnicodeDelim() throws Exception {
-        Map<String, Object> object = new HashMap<>();
+        final Map<String, Object> object = new HashMap<>();
         subject("%{a} » %{b}»%{c}€%{d}")
                 .dissect("foo » bar»baz€quux".getBytes("UTF-8"), object);
 
@@ -138,7 +152,7 @@ public class DissectorTest {
 
     @Test
     public void testRestAppendArgs() throws Exception {
-        Map<String, Object> object = new HashMap<>();
+        final Map<String, Object> object = new HashMap<>();
         subject("%{a} %{b} %{+a}")
                 .dissect("foo bar baz quux".getBytes(), object);
 
@@ -149,7 +163,7 @@ public class DissectorTest {
 
     @Test
     public void testReorderAppendArgs() throws Exception {
-        Map<String, Object> object = new HashMap<>();
+        final Map<String, Object> object = new HashMap<>();
         subject("%{+a} %{a} %{+a} %{b}")
                 .dissect("December 31 1999 quux".getBytes(), object);
 
@@ -160,7 +174,7 @@ public class DissectorTest {
 
     @Test
     public void testReorderAppendArgsWithOrdinals() throws Exception {
-        Map<String, Object> object = new HashMap<>();
+        final Map<String, Object> object = new HashMap<>();
         subject("%{+a/2} %{+a/4} %{+a/1} %{+a/3}")
                 .dissect("bar quux foo baz".getBytes(), object);
 
@@ -170,7 +184,7 @@ public class DissectorTest {
 
     @Test
     public void testOneAppendArgWhenFieldMissing() throws Exception {
-        Map<String, Object> object = new HashMap<>();
+        final Map<String, Object> object = new HashMap<>();
         subject("%{+a} %{b}")
                 .dissect("foo bar".getBytes(), object);
 
@@ -181,7 +195,7 @@ public class DissectorTest {
 
     @Test
     public void testAppendArgsWhenFieldMissing() throws Exception {
-        Map<String, Object> object = new HashMap<>();
+        final Map<String, Object> object = new HashMap<>();
         subject("%{+a} %{b} %{+a} %{c}")
                 .dissect("foo bar baz quux".getBytes(), object);
 
@@ -193,7 +207,7 @@ public class DissectorTest {
 
     @Test
     public void testNonFieldStartArgs() throws Exception {
-        Map<String, Object> object = new HashMap<>();
+        final Map<String, Object> object = new HashMap<>();
         subject("[%{a}] %{b} %{c}")
                 .dissect("[foo bar] baz quux".getBytes(), object);
 
@@ -205,7 +219,7 @@ public class DissectorTest {
 
     @Test
     public void testIndirectFields() throws Exception {
-        Map<String, Object> object = new HashMap<>();
+        final Map<String, Object> object = new HashMap<>();
         subject("%{k1}=%{&k1}, %{k2}=%{&k2}")
                 .dissect("foo=bar, baz=quux".getBytes(), object);
 
@@ -218,7 +232,7 @@ public class DissectorTest {
 
     @Test
     public void testIndirectFieldsMissing() throws Exception {
-        Map<String, Object> object = new HashMap<>();
+        final Map<String, Object> object = new HashMap<>();
         subject("%{k1}=%{&k3}, %{k2}=%{&k4}")
                 .dissect("foo=bar, baz=quux".getBytes(), object);
 
@@ -229,7 +243,7 @@ public class DissectorTest {
 
     @Test
     public void testIndirectFieldsSkipsMissing() throws Exception {
-        Map<String, Object> object = new HashMap<>();
+        final Map<String, Object> object = new HashMap<>();
         subject("%{?k1}=%{&k3}, %{?k2}=%{&k4}")
                 .dissect("foo=bar, baz=quux".getBytes(), object);
 
@@ -238,7 +252,7 @@ public class DissectorTest {
 
     @Test
     public void testIndirectFieldsWithSkipSources() throws Exception {
-        Map<String, Object> object = new HashMap<>();
+        final Map<String, Object> object = new HashMap<>();
         subject("%{?k1}=%{&k1}, %{?k2}=%{&k2}")
                 .dissect("foo=bar, baz=quux".getBytes(), object);
 
@@ -249,7 +263,7 @@ public class DissectorTest {
 
     @Test
     public void testIndirectFieldsWithMapSources() throws Exception {
-        Map<String, Object> object = new HashMap<>();
+        final Map<String, Object> object = new HashMap<>();
         object.put("k1", "a");
         object.put("k2", "b");
         object.put("k3", "c");
@@ -264,7 +278,7 @@ public class DissectorTest {
 
     @Test
     public void testIndirectFieldsWithEventSources() throws Exception {
-        Event object = new Event();
+        final Event object = new Event();
         object.setField("k1", "a");
         object.setField("k2", "b");
         object.setField("k3", "c");
@@ -279,9 +293,9 @@ public class DissectorTest {
 
     @Test
     public void testComplex() throws Exception {
-        String src = "42 2016-05-25T14:47:23Z host.name.com RT_FLOW - RT_FLOW_SESSION_DENY: session denied 2.2.2.20/60000->1.1.1.10/8090 None 6(0) DEFAULT-DENY ZONE-UNTRUST ZONE-DMZ UNKNOWN UNKNOWN N/A(N/A) ge-0/0/0.0";
-        String mpp = "%{} %{syslog_timestamp} %{hostname} %{rt}: %{reason} %{+reason} %{src_ip}/%{src_port}->%{dst_ip}/%{dst_port} %{polrt} %{+polrt} %{+polrt} %{from_zone} %{to_zone} %{rest}";
-        Map<String, Object> object = new HashMap<>();
+        final String src = "42 2016-05-25T14:47:23Z host.name.com RT_FLOW - RT_FLOW_SESSION_DENY: session denied 2.2.2.20/60000->1.1.1.10/8090 None 6(0) DEFAULT-DENY ZONE-UNTRUST ZONE-DMZ UNKNOWN UNKNOWN N/A(N/A) ge-0/0/0.0";
+        final String mpp = "%{} %{syslog_timestamp} %{hostname} %{rt}: %{reason} %{+reason} %{src_ip}/%{src_port}->%{dst_ip}/%{dst_port} %{polrt} %{+polrt} %{+polrt} %{from_zone} %{to_zone} %{rest}";
+        final Map<String, Object> object = new HashMap<>();
         subject(mpp)
                 .dissect(src.getBytes(), object);
         assertEquals(12, object.size());
@@ -301,9 +315,9 @@ public class DissectorTest {
 
     @Test
     public void testComplexWithEvent() throws Exception {
-        String src = "42 2016-05-25T14:47:23Z host.name.com RT_FLOW - RT_FLOW_SESSION_DENY: session denied 2.2.2.20/60000->1.1.1.10/8090 None 6(0) DEFAULT-DENY ZONE-UNTRUST ZONE-DMZ UNKNOWN UNKNOWN N/A(N/A) ge-0/0/0.0";
-        String mpp = "%{} %{syslog_timestamp} %{hostname} %{rt}: %{reason} %{+reason} %{src_ip}/%{src_port}->%{dst_ip}/%{dst_port} %{polrt} %{+polrt} %{+polrt} %{from_zone} %{to_zone} %{rest}";
-        Event object = new Event();
+        final String src = "42 2016-05-25T14:47:23Z host.name.com RT_FLOW - RT_FLOW_SESSION_DENY: session denied 2.2.2.20/60000->1.1.1.10/8090 None 6(0) DEFAULT-DENY ZONE-UNTRUST ZONE-DMZ UNKNOWN UNKNOWN N/A(N/A) ge-0/0/0.0";
+        final String mpp = "%{} %{syslog_timestamp} %{hostname} %{rt}: %{reason} %{+reason} %{src_ip}/%{src_port}->%{dst_ip}/%{dst_port} %{polrt} %{+polrt} %{+polrt} %{from_zone} %{to_zone} %{rest}";
+        final Event object = new Event();
         subject(mpp)
                 .dissect(src.getBytes(), object);
         assertTrue(object.getData().size() >= 12);
@@ -323,7 +337,7 @@ public class DissectorTest {
 
     @Test
     public void testInvalidAppendIndirectField() {
-        String mpp = "%{+&a_field}";
+        final String mpp = "%{+&a_field}";
         exception.expect(InvalidFieldException.class);
         exception.expectMessage("Field cannot prefix with both Append and Indirect Prefix (+&): +&a_field");
         subject(mpp);
@@ -331,7 +345,7 @@ public class DissectorTest {
 
     @Test
     public void testInvalidIndirectAppendField() {
-        String mpp = "%{&+a_field}";
+        final String mpp = "%{&+a_field}";
         exception.expect(InvalidFieldException.class);
         exception.expectMessage("Field cannot prefix with both Append and Indirect Prefix (&+): &+a_field");
         subject(mpp);
@@ -339,12 +353,52 @@ public class DissectorTest {
 
     @Test
     public void testRepeatDelimsArgs() throws Exception {
-        Map<String, Object> object = new HashMap<>();
-        subject("%{a} %{b}-%{c}")
-                .dissect("foo    bar----baz".getBytes(), object);
+        final Map<String, Object> object = new HashMap<>();
+        subject("%{a->}   %{b->}---%{c}")
+                .dissect("foo            bar------------baz".getBytes(), object);
         assertThat(object.size(), is(equalTo(3)));
         assertEquals("foo", object.get("a"));
         assertEquals("bar", object.get("b"));
         assertEquals("baz", object.get("c"));
     }
+
+    @Test
+    public void testLeadingDelimiters() throws Exception {
+        final Map<String, Object> object = new HashMap<>();
+        subject("-%{a}")
+                .dissect("-----666".getBytes(), object);
+        assertEquals("666", object.get("a"));
+    }
+
+    @Test
+    public void testMissingFieldData() throws Exception {
+        final Map<String, Object> object = new HashMap<>();
+        subject("%{a},%{b},%{c},%{d},%{e},%{f}")
+                .dissect("111,,333,,555,666".getBytes(), object);
+        assertEquals("111", object.get("a"));
+        assertEquals("", object.get("b"));
+        assertEquals("333", object.get("c"));
+        assertEquals("", object.get("d"));
+        assertEquals("555", object.get("e"));
+        assertEquals("666", object.get("f"));
+    }
+
+    @Test
+    @Ignore("Skipping long running test used only when profiling")
+    public void profileRepeatDelimsArgs() throws Exception {
+        Map<String, Object> object= new HashMap<>();
+        long start = System.currentTimeMillis();
+        Dissector dissector = subject("%{a->}   %{b}-.-%{c}-%{d}-..-%{e}-%{f}-%{g}-%{h}");
+        byte[] bytes = "foo            bar-.-baz-1111-..-22-333-4444-55555".getBytes();
+        while (true) {
+            dissector.dissect(bytes, object);
+            if(System.currentTimeMillis() - start > 240000) break;
+            object.clear();
+        }
+        assertThat(object.size(), is(equalTo(8)));
+        assertEquals("foo", object.get("a"));
+        assertEquals("bar", object.get("b"));
+        assertEquals("baz", object.get("c"));
+    }
+
 }

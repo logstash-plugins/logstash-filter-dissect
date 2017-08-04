@@ -168,22 +168,35 @@ module LogStash module Filters class Dissect < LogStash::Filters::Base
   public
 
   def register
-    @dissector = LogStash::Dissector.new(@mapping)
+    needs_decoration = @add_field.size + @add_tag.size + @remove_field.size + @remove_tag.size > 0
+    @dissector = LogStash::Dissector.new(@mapping, self, @convert_datatype, needs_decoration)
   end
 
   def filter(event)
     # all plugin functions happen in the JRuby extension:
     # debug, warn and error logging, filter_matched, tagging etc.
-    @dissector.dissect(event, self)
+    @dissector.dissect(event)
   end
 
   def multi_filter(events)
     LogStash::Util.set_thread_plugin(self)
-    @dissector.dissect_multi(events, self)
+    @dissector.dissect_multi(events)
     events
   end
 
+  # this method is stubbed during testing
+  # a reference to it in the JRuby Extension `initialize` may not be valid
   def metric_increment(metric_name)
     metric.increment(metric_name)
+  end
+
+  # the JRuby Extension `initialize` method stores a DynamicMethod reference to this method
+  def increment_matches_metric
+    metric_increment(:matches)
+  end
+
+  # the JRuby Extension `initialize` method stores a DynamicMethod reference to this method
+  def increment_failures_metric
+    metric_increment(:failures)
   end
 end end end

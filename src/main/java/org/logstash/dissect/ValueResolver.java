@@ -1,29 +1,30 @@
 package org.logstash.dissect;
 
-import org.logstash.dissect.fields.Field;
-import org.logstash.dissect.fields.NormalField;
-
-import java.util.Map;
-
 public final class ValueResolver {
     private final byte[] source;
-    private final Map<Field, ValueRef> values;
+    private final ValueRef[] fieldValues;
 
-    ValueResolver(byte[] source, Map<Field, ValueRef> values) {
+    ValueResolver(final byte[] source, final ValueRef[] fieldValues) {
         this.source = source;
-        this.values = values;
+        this.fieldValues = fieldValues;
     }
 
-    public String get(Field field) {
-        return values.get(field).extract(source);
+    public String get(final int fieldId) {
+        return fieldValues[fieldId].extract(source);
     }
 
-    public Field find(String name, Field notThis) {
-        for (Field f : values.keySet()) {
-            if (!f.equals(notThis) && name.equals(f.name())) {
-                return f;
+    public String getOtherByName(final String name, final int notFieldId) {
+        int found = -1;
+        for(int i = 0; i < fieldValues.length; i++) {
+            ValueRef ref = fieldValues[i];
+            if (i != notFieldId && ref != null && name.contentEquals(ref.getFieldName())) {
+                found = i;
+                break;
             }
         }
-        return NormalField.MISSING;
+        if (found >= 0) {
+            return get(found);
+        }
+        return "";
     }
 }
