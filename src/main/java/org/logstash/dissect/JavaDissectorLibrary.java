@@ -13,7 +13,6 @@ import org.jruby.RubyString;
 import org.jruby.anno.JRubyMethod;
 import org.jruby.exceptions.RaiseException;
 import org.jruby.internal.runtime.methods.DynamicMethod;
-import org.jruby.runtime.ObjectAllocator;
 import org.jruby.runtime.ThreadContext;
 import org.jruby.runtime.builtin.IRubyObject;
 import org.jruby.runtime.load.Library;
@@ -21,10 +20,8 @@ import org.logstash.Event;
 import org.logstash.dissect.fields.InvalidFieldException;
 import org.logstash.ext.JrubyEventExtLibrary;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 public class JavaDissectorLibrary implements Library {
@@ -32,72 +29,88 @@ public class JavaDissectorLibrary implements Library {
     private static final Logger LOGGER = LogManager.getLogger(Dissector.class);
 
     @Override
-    final public void load(final Ruby runtime, final boolean wrap) throws IOException {
+    public final void load(final Ruby runtime, final boolean wrap) {
         final RubyModule module = runtime.defineModule("LogStash");
 
-        final RubyClass clazz = runtime.defineClassUnder("Dissector", runtime.getObject(), new ObjectAllocator() {
-            @Override
-            public IRubyObject allocate(final Ruby runtime, final RubyClass rubyClass) {
-                return new JavaDissectorLibrary.RubyDissect(runtime, rubyClass);
-            }
-        }, module);
+        final RubyClass clazz = runtime.defineClassUnder("Dissector", runtime.getObject(), JavaDissectorLibrary.RubyDissect::new, module);
         clazz.defineAnnotatedMethods(JavaDissectorLibrary.RubyDissect.class);
 
         final RubyClass runtimeError = runtime.getRuntimeError();
         module.defineClassUnder("FieldFormatError", runtimeError, runtimeError.getAllocator());
     }
 
-    private static class NativeExceptions {
-        public static NativeException newFieldFormatError(final Ruby ruby, final Throwable cause) {
+    private static final class NativeExceptions {
+        static NativeException newFieldFormatError(final Ruby ruby, final Throwable cause) {
             final RubyClass errorClass = ruby.getModule("LogStash").getClass("FieldFormatError");
             return new NativeException(ruby, errorClass, cause);
         }
     }
 
     public static class RubyDissect extends RubyObject {
-        private final Map<RubyString, Dissector> dissectors = new HashMap<>();
-        private DynamicMethod matchesMetricMethod;
-        private DynamicMethod failuresMetricMethod;
-        private boolean run_matched;
-        private RubyHash conversions;
+        private static final long serialVersionUID = -4417443116118527316L;
+
+        static final String FILTER_MATCHED = "filter_matched";
+        static final String INCREMENT_MATCHES_METRIC = "increment_matches_metric";
+        static final String INCREMENT_FAILURES_METRIC = "increment_failures_metric";
+        static final String TAG_ON_FAILURE = "tag_on_failure";
+        static final String[] EMPTY_STRINGS_ARRAY = new String[0];
+
+        private DissectPair[] dissectors;
+        private ConvertPair[] conversions;
         private RubyObject plugin;
-        private IRubyObject decorator;
-        private IRubyObject metric;
+        private RubyClass pluginMetaClass;
+        private boolean runMatched;
+        private String[] failureTags;
 
         public RubyDissect(final Ruby runtime, final RubyClass klass) {
             super(runtime, klass);
-            run_matched = false;
+            dissectors = DissectPair.EMPTY_ARRAY;
+            conversions = ConvertPair.EMPTY_ARRAY;
+            runMatched = false;
+            failureTags = EMPTY_STRINGS_ARRAY;
         }
 
         public RubyDissect(final Ruby runtime) {
             this(runtime, runtime.getModule("LogStash").getClass("Dissector"));
         }
 
-        // def initialize(mapping, convert?, decorate?)
-        @JRubyMethod(name = "initialize", required = 2, optional = 2)
-        public IRubyObject ruby_initialize(final ThreadContext ctx, final IRubyObject[] args) {
-            final RubyHash maps = (RubyHash) args[0];
-            this.plugin = (RubyObject) args[1];
-            this.conversions = (RubyHash)args[2];
-            this.run_matched = args[3] == null || args[2].isTrue();
-            matchesMetricMethod = getMethod(plugin, "increment_matches_metric");
-            failuresMetricMethod = getMethod(plugin, "increment_failures_metric");
+        private static Map<String, Map<String, Object>> buildLoggerEventMap(final Event event) {
+            final Map<String, Map<String, Object>> map = new HashMap<>(1);
+            map.put("event", event.getData());
+            return map;
+        }
 
-            @SuppressWarnings("unchecked")
-            final Iterator<Map.Entry> iter = maps.entrySet().iterator();
-            while ( iter.hasNext() ) {
-                Map.Entry entry = iter.next();
-                final RubyString k = RubyString.newUTF8String(ctx.runtime, entry.getKey().toString());
-                final String v = entry.getValue().toString();
+        // def initialize(mapping, plugin, convert?, decorate?)
+        @JRubyMethod(name = "initialize", required = 2, optional = 2)
+        public IRubyObject rubyInitialize(final ThreadContext ctx, final IRubyObject[] args) {
+            final RubyHash dissectHash = (RubyHash) args[0];
+            // a hash iterator that is independent of JRuby 1.7 and 9.0
+            // this does not use unchecked casts
+            // RubyHash inst.to_a() creates an array of arrays each having the key and value as elements
+            final IRubyObject[] dissectPairs = dissectHash.to_a().toJavaArray();
+            dissectors = new DissectPair[dissectPairs.length];
+            for (int idx = 0; idx < dissectPairs.length; idx++) {
+                final RubyArray inner = (RubyArray) dissectPairs[idx];
                 try {
-                    if(!v.isEmpty()) {
-                        final Dissector d = Dissector.create(v);
-                        dissectors.put(k, d);
-                    }
-                } catch  (final InvalidFieldException e) {
+                    dissectors[idx] = new DissectPair(inner.first().asString(), inner.last().toString());
+                } catch (final InvalidFieldException e) {
                     throw new RaiseException(e, JavaDissectorLibrary.NativeExceptions.newFieldFormatError(ctx.runtime, e));
                 }
             }
+            plugin = (RubyObject) args[1];
+            pluginMetaClass = plugin.getMetaClass();
+            final RubyHash convertHash = (RubyHash) args[2];
+            // a hash iterator that is independent of JRuby 1.7 and 9.0 (Visitor vs VisitorWithState)
+            // this does not use unchecked casts
+            // RubyHash inst.to_a() creates an array of arrays each having the key and value as elements
+            final IRubyObject[] convertPairs = convertHash.to_a().toJavaArray();
+            conversions = new ConvertPair[convertPairs.length];
+            for (int idx = 0; idx < convertPairs.length; idx++) {
+                final RubyArray inner = (RubyArray) convertPairs[idx];
+                conversions[idx] = new ConvertPair(inner.first().toString(), inner.last().toString());
+            }
+            runMatched = args[3] == null || args[3].isTrue();
+            failureTags = fetchFailureTags(ctx);
             return ctx.nil;
         }
 
@@ -109,46 +122,21 @@ public class JavaDissectorLibrary implements Library {
                 return ctx.nil;
             }
             final Event event = rubyEvent.getEvent();
-            final Map<String, Object> map = new HashMap<>(2);
-            map.put("event", event.getData());
             try {
                 LOGGER.debug("Event before dissection", buildLoggerEventMap(event));
-                // there can be multiple dissect patterns, any success is a positive metric
-                for (final Map.Entry<RubyString, Dissector> entry : dissectors.entrySet()) {
-                    final RubyString key = entry.getKey();
-                    if (event.includes(key.toString())) {
-                        // use ruby event here because we want the bytelist bytes
-                        // from the ruby extract without converting to Java
-                        final RubyString src = rubyEvent.ruby_get_field(ctx, key).asString();
-                        if (src.isEmpty()) {
-                            map.put("key", key.toString());
-                            LOGGER.warn("Dissector mapping, key found in event but it was empty", map);
-                            invoke_failure_tags_and_metric(ctx, event);
-                        } else {
-                            final int result = entry.getValue().dissect(src.getBytes(), event);
-                            // a good result will be the end of the source string
-                            if (result == src.strLength()) {
-                                invoke_matches_metric(ctx);
-                            } else {
-                                LOGGER.warn("Dissector mapping, key found in event but it was empty", map);
-                                invoke_failure_tags_and_metric(ctx, event);
-                            }
-                        }
-                    } else {
-                        map.put("key", key.toString());
-                        invoke_failures_metric(ctx);
-                        LOGGER.warn("Dissector mapping, key not found in event", map);
-                    }
+
+                if (dissectors.length > 0) {
+                    invokeDissection(ctx, rubyEvent, event);
                 }
-                if (!conversions.isEmpty()) {
-                    invoke_conversions(ctx, event);
+                if (conversions.length > 0) {
+                    invokeConversions(event);
                 }
-                if (run_matched) {
-                    invoke_filter_matched(ctx, getMethod(plugin, "filter_matched"), plugin, rubyEvent);
+                if (runMatched) {
+                    invokeFilterMatched(ctx, rubyEvent);
                 }
                 LOGGER.debug("Event after dissection", buildLoggerEventMap(event));
             } catch (final Exception ex) {
-                invoke_failure_tags_and_metric(ctx, event);
+                invokeFailureTagsAndMetric(ctx, event);
                 logException(ex);
             }
             return ctx.nil;
@@ -164,107 +152,117 @@ public class JavaDissectorLibrary implements Library {
             return ctx.nil;
         }
 
-        @JRubyMethod(name = "with_decorator", required = 1)
-        public final IRubyObject withDecorator(final ThreadContext ctx, final IRubyObject decorator) {
-            this.decorator = decorator;
-            return this;
+        private void invokeDissection(final ThreadContext ctx, final JrubyEventExtLibrary.RubyEvent rubyEvent, final Event event) {
+            // this Map is used for logging
+            final Map<String, Object> map = new HashMap<>(2);
+            map.put("event", event.getData());
+            // as there can be multiple dissect patterns, any success is a positive metric
+            for (final DissectPair dissectPair : dissectors) {
+                if (dissectPair.isEmpty()) {
+                    continue;
+                }
+                map.put("key", dissectPair.javaKey());
+                if (!event.includes(dissectPair.javaKey())) {
+                    invokeFailuresMetric(ctx);
+                    LOGGER.warn("Dissector mapping, key not found in event", map);
+                    continue;
+                }
+                // use ruby event here because we want the bytelist bytes
+                // from the ruby extract without converting to Java
+                final RubyString src = rubyEvent.ruby_get_field(ctx, dissectPair.key()).asString();
+                if (src.isEmpty()) {
+                    LOGGER.warn("Dissector mapping, key found in event but it was empty", map);
+                    invokeFailureTagsAndMetric(ctx, event);
+                    continue;
+                }
+                final int result = dissectPair.dissector().dissect(src.getBytes(), event);
+                // a good result will be the end of the source string
+                if (result == src.strLength()) {
+                    invokeMatchesMetric(ctx);
+                } else {
+                    LOGGER.warn("Dissector mapping, key found in event but it was empty", map);
+                    invokeFailureTagsAndMetric(ctx, event);
+                }
+            }
         }
 
-        @JRubyMethod(name = "with_metric", required = 1)
-        public final IRubyObject withMetric(final ThreadContext ctx, final IRubyObject metric) {
-            this.metric = metric;
-            return this;
-        }
-
-        private DynamicMethod getMethod(final RubyObject target, final String name) {
-            return target.getMetaClass().searchMethod(name);
-        }
-
-        private IRubyObject invoke_conversions(final ThreadContext ctx, final Event javaEvent) {
-
-            @SuppressWarnings("unchecked")
-            final Iterator<Map.Entry> iter = conversions.entrySet().iterator();
-            while ( iter.hasNext() ) {
-                Map.Entry entry = iter.next();
-                final String src = entry.getKey().toString();
-                final String newType = entry.getValue().toString();
+        private void invokeConversions(final Event event) {
+            for (final ConvertPair convertPair : conversions) {
                 try {
-                    Converters.select(newType).convert(javaEvent, src);
+                    Converters.select(convertPair.type()).convert(event, convertPair.src());
                 } catch (final NumberFormatException e) {
-                    final Object val = javaEvent.getField(src);
+                    final Object val = event.getField(convertPair.src());
                     if (val == null) {
-                        javaEvent.tag(String.format("_dataconversionnullvalue_%s_%s", src, newType));
+                        event.tag(String.format("_dataconversionnullvalue_%s_%s", convertPair.src(), convertPair.type()));
                     } else {
-                        javaEvent.tag(String.format("_dataconversionuncoercible_%s_%s", src, newType));
+                        event.tag(String.format("_dataconversionuncoercible_%s_%s", convertPair.src(), convertPair.type()));
                     }
                     final String msg = String.format(
                             "Dissector datatype conversion, value cannot be coerced, key: %s, value: %s",
-                            src,
+                            convertPair.src(),
                             String.valueOf(val)
                     );
                     LOGGER.warn(msg);
                 } catch (final IllegalArgumentException e) {
-                    javaEvent.tag(String.format("_dataconversionmissing_%s_%s", src, newType));
-                    LOGGER.warn("Dissector datatype conversion, datatype not supported: " + newType);
+                    event.tag(String.format("_dataconversionmissing_%s_%s", convertPair.src(), convertPair.type()));
+                    LOGGER.warn("Dissector datatype conversion, datatype not supported: {}", convertPair.type());
                 }
             }
-            return ctx.nil;
         }
 
-        private IRubyObject invoke_filter_matched(final ThreadContext ctx, final DynamicMethod m, final RubyObject plugin, final JrubyEventExtLibrary.RubyEvent event) {
-            if (!m.isUndefined()) {
-                return m.call(ctx, plugin, plugin.getMetaClass(), "filter_matched", new IRubyObject[]{event});
+        private void invokeFilterMatched(final ThreadContext ctx, final IRubyObject rubyEvent) {
+            final DynamicMethod method = DynamicMethodCache.get(pluginMetaClass, FILTER_MATCHED);
+            if (!method.isUndefined()) {
+                method.call(ctx, plugin, pluginMetaClass, FILTER_MATCHED, new IRubyObject[]{rubyEvent});
             }
-            return ctx.nil;
         }
 
-        private IRubyObject invoke_failure_tags_and_metric(final ThreadContext ctx, final Event event) {
-            invoke_failures_metric(ctx);
-            invoke_failure_tags(ctx, event);
-            return ctx.nil;
+        private void invokeFailureTagsAndMetric(final ThreadContext ctx, final Event event) {
+            invokeFailuresMetric(ctx);
+            invokeFailureTags(event);
         }
 
-        private IRubyObject invoke_failure_tags(final ThreadContext ctx, final Event event) {
-
-            final DynamicMethod m = getMethod(plugin, "tag_on_failure");
-            if (m.isUndefined()) {
-                return ctx.nil;
-            }
-            final IRubyObject obj = m.call(ctx, plugin, plugin.getMetaClass(), "tag_on_failure");
-            if (obj instanceof RubyArray) {
-                final RubyArray tags = (RubyArray) obj;
-                for (final IRubyObject t : tags.toJavaArray()) {
-                    event.tag(t.toString());
+        private String[] fetchFailureTags(final ThreadContext ctx) {
+            final DynamicMethod method = DynamicMethodCache.get(pluginMetaClass, TAG_ON_FAILURE);
+            String[] result = EMPTY_STRINGS_ARRAY;
+            if (!method.isUndefined()) {
+                final IRubyObject obj = method.call(ctx, plugin, pluginMetaClass, TAG_ON_FAILURE);
+                if (obj instanceof RubyArray) {
+                    final RubyArray tags = (RubyArray) obj;
+                    result = new String[tags.size()];
+                    for(int idx = 0; idx < result.length; idx++) {
+                        result[idx] = tags.entry(idx).asJavaString();
+                    }
                 }
             }
-            return ctx.nil;
+            return result;
         }
 
-        private IRubyObject invoke_matches_metric(final ThreadContext ctx) {
-            if (!matchesMetricMethod.isUndefined()) {
-                return matchesMetricMethod.call(ctx, plugin, plugin.getMetaClass(), "increment_matches_metric");
+        private void invokeFailureTags(final Event event) {
+            for (final String tag : failureTags) {
+                event.tag(tag);
             }
-            return ctx.nil;
         }
 
-        private IRubyObject invoke_failures_metric(final ThreadContext ctx) {
-            if (!failuresMetricMethod.isUndefined()) {
-                return failuresMetricMethod.call(ctx, plugin, plugin.getMetaClass(), "increment_failures_metric");
+        private void invokeMatchesMetric(final ThreadContext ctx) {
+            final DynamicMethod method = DynamicMethodCache.get(pluginMetaClass, INCREMENT_MATCHES_METRIC);
+            if (!method.isUndefined()) {
+                method.call(ctx, plugin, pluginMetaClass, INCREMENT_MATCHES_METRIC);
             }
-            return ctx.nil;
         }
 
-        private void logException(final Throwable ex) {
+        private void invokeFailuresMetric(final ThreadContext ctx) {
+            final DynamicMethod method = DynamicMethodCache.get(pluginMetaClass, INCREMENT_FAILURES_METRIC);
+            if (!method.isUndefined()) {
+                method.call(ctx, plugin, pluginMetaClass, INCREMENT_FAILURES_METRIC);
+            }
+        }
+
+        private void logException(final Throwable exc) {
             final Map<String, Object> map = new HashMap<>(2);
-            map.put("exception", ex.toString());
-            map.put("backtrace", String.join("\n   ", Arrays.stream(ex.getStackTrace()).limit(12).map(StackTraceElement::toString).toArray(String[]::new)));
+            map.put("exception", exc.toString());
+            map.put("backtrace", String.join("\n   ", Arrays.stream(exc.getStackTrace()).limit(12L).map(StackTraceElement::toString).toArray(String[]::new)));
             LOGGER.error("Dissect threw an exception", map);
-        }
-
-        private Map<String, Map<String, Object>> buildLoggerEventMap(final Event event) {
-            final Map<String, Map<String, Object>> map = new HashMap<>(1);
-            map.put("event", event.getData());
-            return map;
         }
     }
 }

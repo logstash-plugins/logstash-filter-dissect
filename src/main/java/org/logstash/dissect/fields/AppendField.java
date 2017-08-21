@@ -16,7 +16,7 @@ public final class AppendField extends AbstractField {
     public static Field create(final int id, final String name, String suffix, final Delimiter previous, final Delimiter next) {
         final Matcher m = ORDINAL_REGEX.matcher(suffix);
         if (m.find()) {
-            return new AppendField(id, name, suffix, APPEND_ORDINAL_BASE + Integer.valueOf(m.group()), previous, next);
+            return new AppendField(id, name, suffix, APPEND_ORDINAL_BASE + Integer.parseInt(m.group()), previous, next);
         } else {
             return new AppendField(id, name, suffix, APPEND_ORDINAL_BASE, previous, next);
         }

@@ -120,7 +120,10 @@ describe LogStash::Filters::Dissect do
       filter.register
       filter.filter(event)
       expect(event.get("code")).to eq("00000001")
-      expect(event.get("tags")).to eq(["_dataconversionnullvalue_ccu_float", "_dataconversionmissing_code_integer", "_dataconversionuncoercible_other_int"])
+      tags = event.get("tags")
+      expect(tags).to include("_dataconversionnullvalue_ccu_float")
+      expect(tags).to include("_dataconversionmissing_code_integer")
+      expect(tags).to include("_dataconversionuncoercible_other_int")
       # Logging moved to java can't mock ruby logger anymore
     end
   end
