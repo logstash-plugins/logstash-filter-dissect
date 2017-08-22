@@ -2,8 +2,6 @@ package org.logstash.dissect.fields;
 
 import org.logstash.dissect.Delimiter;
 
-//import java.util.concurrent.atomic.AtomicInteger;
-
 public abstract class AbstractField implements Field, Comparable<Field> {
     /*
         These ordinal constants establish the saveable field sort order.
