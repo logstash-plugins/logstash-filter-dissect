@@ -18,9 +18,24 @@ public enum Converters implements Converter {
             final double v = Double.parseDouble(String.valueOf(value));
             e.setField(src, v);
         }
+    },
+    NULL_CONVERTER {
+        @Override
+        public void convert(final Event e, final String src) {}
+
+        @Override
+        public boolean isInvalid() {
+            return true;
+        }
     };
 
     public static Converters select(final String toType) {
-        return valueOf(toType.toUpperCase());
+        Converters result = NULL_CONVERTER;
+        try {
+            result = valueOf(toType.toUpperCase());
+        } catch (final IllegalArgumentException e) {
+            // do nothing
+        }
+        return result;
     }
 }

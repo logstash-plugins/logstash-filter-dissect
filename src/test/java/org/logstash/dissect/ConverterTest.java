@@ -1,13 +1,12 @@
 package org.logstash.dissect;
 
-import org.logstash.Event;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.logstash.Event;
 
 import java.util.HashMap;
 
-import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertThat;
 
@@ -26,7 +25,7 @@ public class ConverterTest {
         final String src = "[foo]";
         final Event e = subject(src, "1234");
         Converters.select("int").convert(e, src);
-        assertThat(e.getField(src), is(equalTo(1234)));
+        assertThat(e.getField(src), equalTo(1234));
     }
 
     @Test
@@ -34,7 +33,7 @@ public class ConverterTest {
         final String src = "[foo]";
         final Event e = subject(src, "12.34");
         Converters.select("int").convert(e, src);
-        assertThat(e.getField(src), is(equalTo(12)));
+        assertThat(e.getField(src), equalTo(12));
     }
 
     @Test
@@ -42,7 +41,7 @@ public class ConverterTest {
         final String src = "[foo]";
         final Event e = subject(src, 12.34);
         Converters.select("int").convert(e, src);
-        assertThat(e.getField(src), is(equalTo(12)));
+        assertThat(e.getField(src), equalTo(12));
     }
 
     @Test
@@ -59,7 +58,7 @@ public class ConverterTest {
         final String src = "[foo]";
         final Event e = subject(src, "12.34");
         Converters.select("float").convert(e, src);
-        assertThat(e.getField(src), is(equalTo(12.34)));
+        assertThat(e.getField(src), equalTo(12.34));
     }
 
     @Test
@@ -67,7 +66,7 @@ public class ConverterTest {
         final String src = "[foo]";
         final Event e = subject(src, "1234");
         Converters.select("float").convert(e, src);
-        assertThat(e.getField(src), is(equalTo(1234.0)));
+        assertThat(e.getField(src), equalTo(1234.0));
     }
 
     @Test
@@ -75,7 +74,7 @@ public class ConverterTest {
         final String src = "[foo]";
         final Event e = subject(src, 1234);
         Converters.select("float").convert(e, src);
-        assertThat(e.getField(src), is(equalTo(1234.0)));
+        assertThat(e.getField(src), equalTo(1234.0));
     }
 
     @Test

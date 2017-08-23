@@ -109,7 +109,6 @@ describe LogStash::Filters::Dissect do
           "mapping" => {"message" => "[%{occurred_at}] %{code} %{service} %{?ic}=%{&ic}% %{svc_message}"},
           "convert_datatype" => {
             "ccu" => "float", # ccu field -> nil
-            "code" => "integer", # only int is supported
             "other" => "int" # other field -> hash - not coercible
           }
       }
@@ -122,9 +121,22 @@ describe LogStash::Filters::Dissect do
       expect(event.get("code")).to eq("00000001")
       tags = event.get("tags")
       expect(tags).to include("_dataconversionnullvalue_ccu_float")
-      expect(tags).to include("_dataconversionmissing_code_integer")
       expect(tags).to include("_dataconversionuncoercible_other_int")
       # Logging moved to java can't mock ruby logger anymore
+    end
+  end
+
+  describe "Invalid datatype conversion specified integer instead of int" do
+    subject(:filter) {  LogStash::Filters::Dissect.new(config)  }
+    let(:config)     do
+      {
+        "convert_datatype" => {
+          "code" => "integer", # only int is supported
+        }
+      }
+    end
+    it "raises an error" do
+      expect { filter.register }.to raise_exception(LogStash::ConvertDatatypeFormatError)
     end
   end
 

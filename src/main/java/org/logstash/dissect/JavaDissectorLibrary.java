@@ -37,6 +37,7 @@ public class JavaDissectorLibrary implements Library {
 
         final RubyClass runtimeError = runtime.getRuntimeError();
         module.defineClassUnder("FieldFormatError", runtimeError, runtimeError.getAllocator());
+        module.defineClassUnder("ConvertDatatypeFormatError", runtimeError, runtimeError.getAllocator());
     }
 
     private static final class NativeExceptions {
@@ -83,31 +84,21 @@ public class JavaDissectorLibrary implements Library {
         // def initialize(mapping, plugin, convert?, decorate?)
         @JRubyMethod(name = "initialize", required = 2, optional = 2)
         public IRubyObject rubyInitialize(final ThreadContext ctx, final IRubyObject[] args) {
-            final RubyHash dissectHash = (RubyHash) args[0];
-            // a hash iterator that is independent of JRuby 1.7 and 9.0
-            // this does not use unchecked casts
-            // RubyHash inst.to_a() creates an array of arrays each having the key and value as elements
-            final IRubyObject[] dissectPairs = dissectHash.to_a().toJavaArray();
-            dissectors = new DissectPair[dissectPairs.length];
-            for (int idx = 0; idx < dissectPairs.length; idx++) {
-                final RubyArray inner = (RubyArray) dissectPairs[idx];
-                try {
-                    dissectors[idx] = new DissectPair(inner.first().asString(), inner.last().toString());
-                } catch (final InvalidFieldException e) {
-                    throw new RaiseException(e, JavaDissectorLibrary.NativeExceptions.newFieldFormatError(ctx.runtime, e));
-                }
+            Ruby ruby = ctx.runtime;
+            try {
+                dissectors = DissectPair.createArrayFromHash((RubyHash) args[0]);
+            } catch (final InvalidFieldException e) {
+                throw new RaiseException(e, JavaDissectorLibrary.NativeExceptions.newFieldFormatError(ruby, e));
             }
             plugin = (RubyObject) args[1];
             pluginMetaClass = plugin.getMetaClass();
-            final RubyHash convertHash = (RubyHash) args[2];
-            // a hash iterator that is independent of JRuby 1.7 and 9.0 (Visitor vs VisitorWithState)
-            // this does not use unchecked casts
-            // RubyHash inst.to_a() creates an array of arrays each having the key and value as elements
-            final IRubyObject[] convertPairs = convertHash.to_a().toJavaArray();
-            conversions = new ConvertPair[convertPairs.length];
-            for (int idx = 0; idx < convertPairs.length; idx++) {
-                final RubyArray inner = (RubyArray) convertPairs[idx];
-                conversions[idx] = new ConvertPair(inner.first().toString(), inner.last().toString());
+            conversions = ConvertPair.createArrayFromHash((RubyHash) args[2]);
+            for (final ConvertPair convertPair : conversions) {
+                if (convertPair.converter().isInvalid()) {
+                    final RubyClass klass = ruby.getModule("LogStash").getClass("ConvertDatatypeFormatError");
+                    final String errorMessage = String.format("Dissector datatype conversion, datatype not supported: %s", convertPair.type());
+                    throw new RaiseException(ruby, klass, errorMessage, true);
+                }
             }
             runMatched = args[3] == null || args[3].isTrue();
             failureTags = fetchFailureTags(ctx);
@@ -146,9 +137,7 @@ public class JavaDissectorLibrary implements Library {
         @JRubyMethod(name = "dissect_multi", required = 1)
         public final IRubyObject dissectMulti(final ThreadContext ctx, final IRubyObject arg1) {
             final RubyArray events = (RubyArray) arg1;
-            for (final IRubyObject event : events.toJavaArray()) {
-                dissect(ctx, event);
-            }
+            Arrays.stream(events.toJavaArray()).forEach(event -> dissect(ctx, event));
             return ctx.nil;
         }
 
@@ -188,24 +177,23 @@ public class JavaDissectorLibrary implements Library {
 
         private void invokeConversions(final Event event) {
             for (final ConvertPair convertPair : conversions) {
-                try {
-                    Converters.select(convertPair.type()).convert(event, convertPair.src());
-                } catch (final NumberFormatException e) {
-                    final Object val = event.getField(convertPair.src());
-                    if (val == null) {
-                        event.tag(String.format("_dataconversionnullvalue_%s_%s", convertPair.src(), convertPair.type()));
-                    } else {
-                        event.tag(String.format("_dataconversionuncoercible_%s_%s", convertPair.src(), convertPair.type()));
+                if (!convertPair.converter().isInvalid()) {
+                    try {
+                        convertPair.converter().convert(event, convertPair.src());
+                    } catch (final NumberFormatException e) {
+                        final Object val = event.getField(convertPair.src());
+                        if (val == null) {
+                            event.tag(String.format("_dataconversionnullvalue_%s_%s", convertPair.src(), convertPair.type()));
+                        } else {
+                            event.tag(String.format("_dataconversionuncoercible_%s_%s", convertPair.src(), convertPair.type()));
+                        }
+                        final String msg = String.format(
+                                "Dissector datatype conversion, value cannot be coerced, key: %s, value: %s",
+                                convertPair.src(),
+                                String.valueOf(val)
+                        );
+                        LOGGER.warn(msg);
                     }
-                    final String msg = String.format(
-                            "Dissector datatype conversion, value cannot be coerced, key: %s, value: %s",
-                            convertPair.src(),
-                            String.valueOf(val)
-                    );
-                    LOGGER.warn(msg);
-                } catch (final IllegalArgumentException e) {
-                    event.tag(String.format("_dataconversionmissing_%s_%s", convertPair.src(), convertPair.type()));
-                    LOGGER.warn("Dissector datatype conversion, datatype not supported: {}", convertPair.type());
                 }
             }
         }
