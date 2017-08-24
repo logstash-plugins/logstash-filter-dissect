@@ -122,9 +122,6 @@ public class JavaDissectorLibrary implements Library {
                 if (conversions.length > 0) {
                     invokeConversions(event);
                 }
-                if (runMatched) {
-                    invokeFilterMatched(ctx, rubyEvent);
-                }
                 LOGGER.debug("Event after dissection", buildLoggerEventMap(event));
             } catch (final Exception ex) {
                 invokeFailureTagsAndMetric(ctx, event);
@@ -167,6 +164,9 @@ public class JavaDissectorLibrary implements Library {
                 final int result = dissectPair.dissector().dissect(src.getBytes(), event);
                 // a good result will be the end of the source string
                 if (result == src.strLength()) {
+                    if (runMatched) {
+                        invokeFilterMatched(ctx, rubyEvent);
+                    }
                     invokeMatchesMetric(ctx);
                 } else {
                     LOGGER.warn("Dissector mapping, key found in event but it was empty", map);
