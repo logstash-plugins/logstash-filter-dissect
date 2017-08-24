@@ -13,8 +13,6 @@ public abstract class AbstractField implements Field, Comparable<Field> {
         is an offset off of APPEND_ORDINAL_BASE.
      */
 
-//    private static final AtomicInteger idGenerator = new AtomicInteger(0);
-
     private final int ordinal;
     private final Delimiter previous;
     private final Delimiter next;
