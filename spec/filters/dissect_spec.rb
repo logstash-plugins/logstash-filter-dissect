@@ -237,6 +237,22 @@ describe LogStash::Filters::Dissect do
     end
   end
 
+  describe "When the delimiters contain '{' and '}'" do
+    let(:options) { { "mapping" => { "message" => "{%{a}}{%{b}}%{rest}" } } }
+    subject { described_class.new(options) }
+    let(:event) { LogStash::Event.new({ "message" => "{foo}{bar}" }) }
+    before(:each) do
+      subject.register
+      subject.filter(event)
+    end
+    it "should dissect properly and not add tags to the event" do
+      expect(event.get("a")).to eq("foo")
+      expect(event.get("b")).to eq("bar")
+      expect(event.get("rest")).to eq("")
+      expect(event.get("tags")).to be_nil
+    end
+  end
+
   describe "Basic dissection" do
 
     let(:options) { { "mapping" => { "message" => "%{a} %{b}" } } }
