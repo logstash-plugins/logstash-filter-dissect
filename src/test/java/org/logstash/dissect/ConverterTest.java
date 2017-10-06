@@ -25,7 +25,7 @@ public class ConverterTest {
         final String src = "[foo]";
         final Event e = subject(src, "1234");
         Converters.select("int").convert(e, src);
-        assertThat(e.getField(src), equalTo(1234L));
+        assertThat(e.getField(src), equalTo(1234));
     }
 
     @Test
@@ -33,7 +33,7 @@ public class ConverterTest {
         final String src = "[foo]";
         final Event e = subject(src, "12.34");
         Converters.select("int").convert(e, src);
-        assertThat(e.getField(src), equalTo(12L));
+        assertThat(e.getField(src), equalTo(12));
     }
 
     @Test
@@ -41,7 +41,7 @@ public class ConverterTest {
         final String src = "[foo]";
         final Event e = subject(src, 12.34);
         Converters.select("int").convert(e, src);
-        assertThat(e.getField(src), equalTo(12L));
+        assertThat(e.getField(src), equalTo(12));
     }
 
     @Test

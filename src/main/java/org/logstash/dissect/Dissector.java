@@ -141,60 +141,85 @@ public class Dissector {
     }
 
     private int dissectValues(final byte[] source, final ValueRef[] fieldValueRefs) {
-        int left = initialOffset;
-        int pos;
-        int fieldStart;
-        int fieldLength;
-        Delimiter prev;
+        final Dissector.Position position = new Dissector.Position(source, initialOffset);
+
         final int numFields = fields.size();
-        for (int idx = 0, fieldsSize = numFields - 1; idx < fieldsSize; idx++) {
+        final int lastFieldIndex = numFields - 1;
+        for (int idx = 0; idx < lastFieldIndex; idx++) {
             final Field field = fields.get(idx);
             fieldValueRefs[field.id()].clear();
             // each delimiter is given a strategy that uses the indexOf method
             // to search in the source bytes for itself starting from
             // where we think next field might begin (left)
-            prev = field.previousDelimiter();
-            // the user indicated greedy with -> OR the first field had delimiter(s) before it
-            boolean repeatedDelimiters = prev != null && prev.isGreedy();
-            while (repeatedDelimiters) {
-                pos = prev.indexOf(source, left);
-                if (pos == left) { // we found a delimiter
-                    left = pos + prev.size();
-                } else {
-                    repeatedDelimiters = false;
-                }
-            }
-            fieldStart = left;
-            final Delimiter next = field.nextDelimiter();
-            fieldLength = 0;
+            position.moveBeyondDelimiter(field.previousDelimiter());
+            position.moveNext(field.nextDelimiter());
+            fieldValueRefs[field.id()].update(position.start, position.length);
+        }
+        final Field lastField = fields.get(lastFieldIndex);
+        fieldValueRefs[lastField.id()].clear();
+        position.moveBeyondDelimiter(lastField.previousDelimiter());
+        position.repositionToEnd();
+        fieldValueRefs[lastField.id()].update(position.start, position.length);
+        return position.pos;
+    }
+
+    private static final class Position {
+        int pos;
+        int left;
+        final byte[] source;
+        int start;
+        int length;
+
+        Position(final byte[] sourceBytes, final int initial) {
+            source = sourceBytes;
+            left = initial;
+            pos = 0;
+            start = 0;
+            length = 0;
+        }
+
+        void setStart() {
+            start = left;
+        }
+
+        void setLength() {
+            length = pos - left;
+        }
+
+        void repositionToEnd() {
+            pos = source.length;
+            setLength();
+        }
+
+        void moveNext(final Delimiter next) {
+            length = 0;
             pos = next.indexOf(source, left);
             if (pos > 0) {
-                // pos is at the next delimiter
-                // we have found the end of the field
-                fieldLength = pos - left;
-                // set left to be the end of the delimiter
-                // where we hope is the start index of the next field
+                // pos is now at the next delimiter, found the end of the field
+                setLength();
+                // set left to be the end of the delimiter & start index of the next field
                 left = pos + next.size();
             }
-            fieldValueRefs[field.id()].update(fieldStart, fieldLength);
         }
-        final Field lastField = fields.get(numFields - 1);
-        fieldValueRefs[lastField.id()].clear();
-        prev = lastField.previousDelimiter();
-        // the user indicated greedy with -> OR the first field had delimiter(s) before it
-        boolean repeatedDelimiters = prev != null && prev.isGreedy();
-        while (repeatedDelimiters) {
-            pos = prev.indexOf(source, left);
-            if (pos == left) { // we found a delimiter
-                left = pos + prev.size();
+
+        void moveBeyondDelimiter(final Delimiter prev) {
+            if (prev == null || !prev.isGreedy()) {
+                // no delimiter or not greedy (did not use '->')
+                // we are at the start
+                setStart();
             } else {
-                repeatedDelimiters = false;
+                // greedy consume,
+                while (true) {
+                    pos = prev.indexOf(source, left);
+                    if (pos != left) {
+                        // we found the start of value
+                        setStart();
+                        break;
+                    }
+                    // we found a delimiter move to the end of the delimiter
+                    left = pos + prev.size();
+                }
             }
         }
-        fieldStart = left;
-        pos = source.length;
-        fieldLength = pos - left;
-        fieldValueRefs[lastField.id()].update(fieldStart, fieldLength);
-        return pos;
     }
 }

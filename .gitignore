@@ -12,5 +12,6 @@ out
 # Intellij
 .idea
 *.iml
-
+*.ipr
+*.iws
 gradle.properties

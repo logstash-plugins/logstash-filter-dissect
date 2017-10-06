@@ -114,7 +114,9 @@ public class JavaDissectorLibrary implements Library {
             }
             final Event event = rubyEvent.getEvent();
             try {
-                LOGGER.debug("Event before dissection", buildLoggerEventMap(event));
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("Event before dissection", buildLoggerEventMap(event));
+                }
 
                 if (dissectors.length > 0) {
                     invokeDissection(ctx, rubyEvent, event);
@@ -122,7 +124,9 @@ public class JavaDissectorLibrary implements Library {
                 if (conversions.length > 0) {
                     invokeConversions(event);
                 }
-                LOGGER.debug("Event after dissection", buildLoggerEventMap(event));
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("Event after dissection", buildLoggerEventMap(event));
+                }
             } catch (final Exception ex) {
                 invokeFailureTagsAndMetric(ctx, event);
                 logException(ex);
@@ -141,7 +145,7 @@ public class JavaDissectorLibrary implements Library {
         private void invokeDissection(final ThreadContext ctx, final JrubyEventExtLibrary.RubyEvent rubyEvent, final Event event) {
             // this Map is used for logging
             final Map<String, Object> map = new HashMap<>(2);
-            map.put("event", event.getData());
+            map.put("event", (Map)event.getData());
             // as there can be multiple dissect patterns, any success is a positive metric
             for (final DissectPair dissectPair : dissectors) {
                 if (dissectPair.isEmpty()) {
