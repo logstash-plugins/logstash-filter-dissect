@@ -94,6 +94,7 @@ dependencies {
     provided 'org.jruby:jruby-core:9.1.12.0'
     provided fileTree(dir: logstashCoreGemPath, include: '**/*.jar')
     testCompile 'junit:junit:4.12'
+    testCompile 'org.assertj:assertj-core:3.8.0'
     jmhCompile fileTree(dir: logstashCoreGemPath, include: '**/*.jar')
 }
 
