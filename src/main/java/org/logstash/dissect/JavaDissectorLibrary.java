@@ -75,16 +75,23 @@ public class JavaDissectorLibrary implements Library {
             this(runtime, runtime.getModule("LogStash").getClass("Dissector"));
         }
 
-        private static Map<String, Map<String, Object>> buildLoggerEventMap(final Event event) {
-            final Map<String, Map<String, Object>> map = new HashMap<>(1);
-            map.put("event", event.getData());
+        private static RubyHash addLoggableEvent(final ThreadContext ctx, final IRubyObject rubyEvent, final RubyHash map) {
+            map.put("event", rubyEvent.getMetaClass().finvoke(ctx, rubyEvent, "to_hash"));
             return map;
+        }
+        private static RubyHash createLoggableHash(final ThreadContext ctx) {
+            return RubyHash.newSmallHash(ctx.runtime);
+        }
+        private static RubyHash createHashInclField(final ThreadContext ctx, final Object fieldValue) {
+            final RubyHash hash = createLoggableHash(ctx);
+            hash.put("field", fieldValue);
+            return hash;
         }
 
         // def initialize(mapping, plugin, convert?, decorate?)
         @JRubyMethod(name = "initialize", required = 2, optional = 2)
         public IRubyObject rubyInitialize(final ThreadContext ctx, final IRubyObject[] args) {
-            Ruby ruby = ctx.runtime;
+            final Ruby ruby = ctx.runtime;
             try {
                 dissectors = DissectPair.createArrayFromHash((RubyHash) args[0]);
             } catch (final InvalidFieldException e) {
@@ -115,7 +122,7 @@ public class JavaDissectorLibrary implements Library {
             final Event event = rubyEvent.getEvent();
             try {
                 if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("Event before dissection", buildLoggerEventMap(event));
+                    LOGGER.debug("Event before dissection", addLoggableEvent(ctx, rubyEvent, createLoggableHash(ctx)));
                 }
 
                 if (dissectors.length > 0) {
@@ -125,7 +132,7 @@ public class JavaDissectorLibrary implements Library {
                     invokeConversions(event);
                 }
                 if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("Event after dissection", buildLoggerEventMap(event));
+                    LOGGER.debug("Event after dissection", addLoggableEvent(ctx, rubyEvent, createLoggableHash(ctx)));
                 }
             } catch (final Exception ex) {
                 invokeFailureTagsAndMetric(ctx, event);
@@ -143,31 +150,30 @@ public class JavaDissectorLibrary implements Library {
         }
 
         private void invokeDissection(final ThreadContext ctx, final JrubyEventExtLibrary.RubyEvent rubyEvent, final Event event) {
-            // this Map is used for logging
-            final Map<String, Object> map = new HashMap<>(2);
-            map.put("event", rubyEvent.ruby_to_hash(ctx));
              // as there can be multiple dissect patterns, any success is a positive metric
             for (final DissectPair dissectPair : dissectors) {
                 if (dissectPair.isEmpty()) {
                     continue;
                 }
-                map.put("key", dissectPair.javaKey());
                 if (!event.includes(dissectPair.javaKey())) {
                     invokeFailuresMetric(ctx);
-                    LOGGER.warn("Dissector mapping, key not found in event", map);
+                    LOGGER.warn("Dissector mapping, field not found in event", addLoggableEvent(ctx, rubyEvent,
+                            createHashInclField(ctx, dissectPair.key())));
                     continue;
                 }
                 // use ruby event here because we want the bytelist bytes
                 // from the ruby extract without converting to Java
                 final RubyString src = rubyEvent.ruby_get_field(ctx, dissectPair.key()).asString();
                 if (src.isNil()) {
-                    LOGGER.warn("Dissector mapping, no value found for key", map);
+                    LOGGER.warn("Dissector mapping, no value found for field", addLoggableEvent(ctx, rubyEvent,
+                            createHashInclField(ctx, dissectPair.key())));
                     invokeFailureTagsAndMetric(ctx, event);
                     continue;
                 }
                 if (src.isEmpty()) {
-                    LOGGER.warn("Dissector mapping, key found in event but it was empty", map);
                     invokeFailureTagsAndMetric(ctx, event);
+                    LOGGER.warn("Dissector mapping, field found in event but it was empty", addLoggableEvent(ctx, rubyEvent,
+                            createHashInclField(ctx, dissectPair.key())));
                     continue;
                 }
                 final int result = dissectPair.dissector().dissect(src.getBytes(), event);
@@ -178,7 +184,8 @@ public class JavaDissectorLibrary implements Library {
                     }
                     invokeMatchesMetric(ctx);
                 } else {
-                    LOGGER.warn("Dissector mapping, key found in event but it was empty", map);
+                    LOGGER.warn("Dissector mapping, field found in event but it was empty",addLoggableEvent(ctx, rubyEvent,
+                            createHashInclField(ctx, dissectPair.key())));
                     invokeFailureTagsAndMetric(ctx, event);
                 }
             }
@@ -197,7 +204,7 @@ public class JavaDissectorLibrary implements Library {
                             event.tag(String.format("_dataconversionuncoercible_%s_%s", convertPair.src(), convertPair.type()));
                         }
                         final String msg = String.format(
-                                "Dissector datatype conversion, value cannot be coerced, key: %s, value: %s",
+                                "Dissector datatype conversion, value cannot be coerced, field: %s, value: %s",
                                 convertPair.src(),
                                 String.valueOf(val)
                         );
