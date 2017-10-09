@@ -145,8 +145,8 @@ public class JavaDissectorLibrary implements Library {
         private void invokeDissection(final ThreadContext ctx, final JrubyEventExtLibrary.RubyEvent rubyEvent, final Event event) {
             // this Map is used for logging
             final Map<String, Object> map = new HashMap<>(2);
-            map.put("event", (Map)event.getData());
-            // as there can be multiple dissect patterns, any success is a positive metric
+            map.put("event", rubyEvent.ruby_to_hash(ctx));
+             // as there can be multiple dissect patterns, any success is a positive metric
             for (final DissectPair dissectPair : dissectors) {
                 if (dissectPair.isEmpty()) {
                     continue;
@@ -160,6 +160,11 @@ public class JavaDissectorLibrary implements Library {
                 // use ruby event here because we want the bytelist bytes
                 // from the ruby extract without converting to Java
                 final RubyString src = rubyEvent.ruby_get_field(ctx, dissectPair.key()).asString();
+                if (src.isNil()) {
+                    LOGGER.warn("Dissector mapping, no value found for key", map);
+                    invokeFailureTagsAndMetric(ctx, event);
+                    continue;
+                }
                 if (src.isEmpty()) {
                     LOGGER.warn("Dissector mapping, key found in event but it was empty", map);
                     invokeFailureTagsAndMetric(ctx, event);

@@ -126,6 +126,22 @@ describe LogStash::Filters::Dissect do
     end
   end
 
+  describe "Basic dissection when the source field does not exist" do
+    let(:event) { LogStash::Event.new("message" => "foo", "other" => {}) }
+    subject(:filter) {  LogStash::Filters::Dissect.new(config)  }
+    let(:config)     do
+      {
+        "mapping" => {"msg" => "[%{occurred_at}] %{code} %{service} %{?ic}=%{&ic}% %{svc_message}"},
+      }
+    end
+    it "does not raise an error" do
+      filter.register
+      expect(subject).to receive(:metric_increment).once.with(:failures)
+      # it should log a warning, but we can't test that
+      expect { filter.filter(event) }.not_to raise_exception
+    end
+  end
+
   describe "Invalid datatype conversion specified integer instead of int" do
     subject(:filter) {  LogStash::Filters::Dissect.new(config)  }
     let(:config)     do

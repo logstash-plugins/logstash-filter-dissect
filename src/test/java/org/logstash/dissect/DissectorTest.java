@@ -50,12 +50,20 @@ public class DissectorTest {
     @Test
     public void testBasicArgs() throws Exception {
         final Map<String, Object> object = new HashMap<>();
-        subject("%{a} %{b->} %{c}")
-                .dissect("foo bar   baz".getBytes(), object);
+        final String source = "foo bar   baz";
+        final int result = subject("%{a} %{b->} %{c}").dissect(source.getBytes(), object);
         assertThat(object.size(), is(equalTo(3)));
         assertEquals("foo", object.get("a"));
         assertEquals("bar", object.get("b"));
         assertEquals("baz", object.get("c"));
+        assertEquals(source.length(), result);
+    }
+
+    @Test
+    public void testNullSource() throws Exception {
+        final Map<String, Object> object = new HashMap<>();
+        final int result = subject("%{a}%{b} %{c}").dissect(null, object);
+        assertEquals(-1, result);
     }
 
     @Test

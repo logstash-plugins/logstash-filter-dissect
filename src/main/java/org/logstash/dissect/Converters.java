@@ -7,7 +7,7 @@ public enum Converters implements Converter {
         @Override
         public void convert(final Event e, final String src) {
             final Object value = e.getField(src);
-            final int v = new Double(String.valueOf(value)).intValue();
+            final long v = new Double(String.valueOf(value)).longValue();
             e.setField(src, v);
         }
     },

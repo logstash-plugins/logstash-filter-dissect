@@ -92,7 +92,7 @@ public class Dissector {
 
     public final int dissect(final byte[] source, final Map<String, Object> keyValueMap) {
         final int pos;
-        if (fields.isEmpty() || source.length == 0) {
+        if (fields.isEmpty() || source == null || source.length == 0) {
             pos = -1;
         } else {
             // keyValueMap is a Map we get given - its is what we are updating with the keys and found values
