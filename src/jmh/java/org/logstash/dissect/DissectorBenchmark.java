@@ -19,63 +19,63 @@ import java.util.concurrent.TimeUnit;
 @Fork(2)
 public class DissectorBenchmark {
     @Benchmark
-    public void aWarmupVLong(Blackhole bh) {
+    public void aWarmupVLong(final Blackhole bh) {
         bh.consume(
-                DissectVLongDelims.DISSECTOR.dissect(DissectVLongDelims.SRC.getBytes(), DissectMap.map())
+                DissectorBenchmark.DissectVLongDelims.DISSECTOR.dissect(DissectorBenchmark.DissectVLongDelims.SRC.getBytes(), DissectorBenchmark.DissectMap.map())
         );
     }
 
     @Benchmark
-    public void dOneDelim(Blackhole bh) {
+    public void dOneDelim(final Blackhole bh) {
         bh.consume(
-                DissectOneDelim.DISSECTOR.dissect(DissectOneDelim.SRC.getBytes(), DissectMap.map())
+                DissectOneDelim.DISSECTOR.dissect(DissectOneDelim.SRC.getBytes(), DissectorBenchmark.DissectMap.map())
         );
     }
 
     @Benchmark
-    public void eTwoDelim(Blackhole bh) {
+    public void eTwoDelim(final Blackhole bh) {
         bh.consume(
-                DissectTwoDelims.DISSECTOR.dissect(DissectTwoDelims.SRC.getBytes(), DissectMap.map())
+                DissectTwoDelims.DISSECTOR.dissect(DissectTwoDelims.SRC.getBytes(), DissectorBenchmark.DissectMap.map())
         );
     }
 
     @Benchmark
-    public void cLongDelims(Blackhole bh) {
+    public void cLongDelims(final Blackhole bh) {
         bh.consume(
-                DissectLongDelims.DISSECTOR.dissect(DissectLongDelims.SRC.getBytes(), DissectMap.map())
+                DissectLongDelims.DISSECTOR.dissect(DissectLongDelims.SRC.getBytes(), DissectorBenchmark.DissectMap.map())
         );
     }
 
     @Benchmark
-    public void bVLongDelims(Blackhole bh) {
+    public void bVLongDelims(final Blackhole bh) {
         bh.consume(
-                DissectVLongDelims.DISSECTOR.dissect(DissectVLongDelims.SRC.getBytes(), DissectMap.map())
+                DissectorBenchmark.DissectVLongDelims.DISSECTOR.dissect(DissectorBenchmark.DissectVLongDelims.SRC.getBytes(), DissectorBenchmark.DissectMap.map())
         );
     }
 
 
     @State(Scope.Thread)
     public static class DissectOneDelim {
-        public static final String SRC = Source.buildSrc(Source.delims1, 10);
-        public static final Dissector DISSECTOR = Dissector.create(Source.buildMpp(Source.delims1, 10));
+        public static final String SRC = DissectorBenchmark.Source.buildSrc(DissectorBenchmark.Source.delims1, 10);
+        public static final Dissector DISSECTOR = Dissector.create(DissectorBenchmark.Source.buildMpp(DissectorBenchmark.Source.delims1, 10));
     }
 
     @State(Scope.Thread)
     public static class DissectTwoDelims {
-        public static final String SRC = Source.buildSrc(Source.delims2, 10);
-        public static final Dissector DISSECTOR = Dissector.create(Source.buildMpp(Source.delims2, 10));
+        public static final String SRC = DissectorBenchmark.Source.buildSrc(DissectorBenchmark.Source.delims2, 10);
+        public static final Dissector DISSECTOR = Dissector.create(DissectorBenchmark.Source.buildMpp(DissectorBenchmark.Source.delims2, 10));
     }
 
     @State(Scope.Thread)
     public static class DissectLongDelims {
-        public static final String SRC = Source.buildSrc(Source.delims3, 10);
-        public static final Dissector DISSECTOR = Dissector.create(Source.buildMpp(Source.delims3, 10));
+        public static final String SRC = DissectorBenchmark.Source.buildSrc(DissectorBenchmark.Source.delims3, 10);
+        public static final Dissector DISSECTOR = Dissector.create(DissectorBenchmark.Source.buildMpp(DissectorBenchmark.Source.delims3, 10));
     }
 
     @State(Scope.Thread)
     public static class DissectVLongDelims {
-        public static final String SRC = Source.buildSrc(Source.delimsX, 10);
-        public static final Dissector DISSECTOR = Dissector.create(Source.buildMpp(Source.delimsX, 10));
+        public static final String SRC = DissectorBenchmark.Source.buildSrc(DissectorBenchmark.Source.delimsX, 10);
+        public static final Dissector DISSECTOR = Dissector.create(DissectorBenchmark.Source.buildMpp(DissectorBenchmark.Source.delimsX, 10));
     }
 
     @State(Scope.Thread)
@@ -86,17 +86,17 @@ public class DissectorBenchmark {
     }
 
     private static class Source {
-        private static String src = "QQQQQwwwww‰‰‰‰‰rrrrrtttttYYYYYuuuuuIIIIIøøøøøpppppåååååsssssdddddfffffgggggHHHHHjjjjjkkkkkLLLLLzzzzz";
-        private static String mpp = "%{a}%{b}%{c}%{d}%{e}%{f}%{g}%{h}%{i}%{j}";
+        private static final String src = "QQQQQwwwww‰‰‰‰‰rrrrrtttttYYYYYuuuuuIIIIIøøøøøpppppåååååsssssdddddfffffgggggHHHHHjjjjjkkkkkLLLLLzzzzz";
+        private static final String mpp = "%{a}%{b}%{c}%{d}%{e}%{f}%{g}%{h}%{i}%{j}";
 
-        public static String[] delims1 = new String[]{" ", ".", ",", "/", "?", "|", "!", "$"};
-        public static String[] delims2 = new String[]{" *", ". ", ",.", "/,", "?/", "|?", "!|", "$!"};
-        public static String[] delims3 = new String[]{" *^", ". *", ",. ", "/,.", "?/,", "|?/", "!|?", "$!|"};
-        public static String[] delimsX = new String[]{" *..........^", ". ..........*", ",........... ", "/,...........", "?/..........,", "|?........../", "!|..........?", "$!..........|"};
+        public static final String[] delims1 = {" ", ".", ",", "/", "?", "|", "!", "$"};
+        public static final String[] delims2 = {" *", ". ", ",.", "/,", "?/", "|?", "!|", "$!"};
+        public static final String[] delims3 = {" *^", ". *", ",. ", "/,.", "?/,", "|?/", "!|?", "$!|"};
+        public static final String[] delimsX = {" *..........^", ". ..........*", ",........... ", "/,...........", "?/..........,", "|?........../", "!|..........?", "$!..........|"};
 
-        public static String buildSrc(String[] delims, int count) {
-            int d = delims.length;
-            StringBuilder sb = new StringBuilder();
+        public static String buildSrc(final String[] delims, final int count) {
+            final int d = delims.length;
+            final StringBuilder sb = new StringBuilder();
             int k = 0;
             for(int i = 0; i < count; i++) {
                 k = (i * 5) % src.length();
@@ -107,9 +107,9 @@ public class DissectorBenchmark {
             return sb.toString();
         }
 
-        public static String buildMpp(String[] delims, int count) {
-            int d = delims.length;
-            StringBuilder sb = new StringBuilder();
+        public static String buildMpp(final String[] delims, final int count) {
+            final int d = delims.length;
+            final StringBuilder sb = new StringBuilder();
             int k = 0;
             for(int i = 0; i < count; i++) {
                 k = (i * 4) % mpp.length();
@@ -129,8 +129,8 @@ public class DissectorBenchmark {
 	 * To run, in command-line: $ ./gradlew clean jmh
 	 */
 
-    public static void main(String[] args) throws RunnerException {
-        Options options = new OptionsBuilder()
+    public static void main(final String[] args) throws RunnerException {
+        final Options options = new OptionsBuilder()
                 .include(DissectorBenchmark.class.getSimpleName())
                 .build();
 

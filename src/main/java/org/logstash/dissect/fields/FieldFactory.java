@@ -42,34 +42,40 @@ public final class FieldFactory {
     private static final String MIXED_PREFIXES = "Field cannot prefix with both Append and Indirect Prefix (%s): %s";
     private static final String PREFIXED_EMPTY = "Field cannot be a prefix on its own without further text";
 
-    public static Field create(String field, Delimiter previous, Delimiter next) {
+    public static Field create(final int id, final String field, final Delimiter previous, final Delimiter next) {
+        final String[] nameSuffix;
+
         if (field.isEmpty() || field.startsWith("?")) {
-            return SkipField.create(removeLeadingCharIfPresent(field), previous, next);
+            nameSuffix = Field.extractNameSuffix(removeLeadingCharIfPresent(field));
+            return SkipField.create(id, nameSuffix[0], nameSuffix[1], previous, next);
         }
         if (field.startsWith("+&")) {
             throw new InvalidFieldException(String.format(MIXED_PREFIXES, "+&", field));
         }
-        if (field.startsWith("+")) {
-            String shorterField = removeLeadingCharIfPresent(field);
-            if (shorterField.isEmpty()) {
-                throw new InvalidFieldException(PREFIXED_EMPTY);
-            }
-            return AppendField.create(shorterField, previous, next);
-        }
         if (field.startsWith("&+")) {
             throw new InvalidFieldException(String.format(MIXED_PREFIXES, "&+", field));
         }
-        if (field.startsWith("&")) {
-            String shorterField = removeLeadingCharIfPresent(field);
+        if (field.startsWith("+")) {
+            final String shorterField = removeLeadingCharIfPresent(field);
             if (shorterField.isEmpty()) {
                 throw new InvalidFieldException(PREFIXED_EMPTY);
             }
-            return IndirectField.create(shorterField, previous, next);
+            nameSuffix = Field.extractNameSuffix(shorterField);
+            return AppendField.create(id, nameSuffix[0], nameSuffix[1], previous, next);
         }
-        return NormalField.create(field, previous, next);
+        if (field.startsWith("&")) {
+            final String shorterField = removeLeadingCharIfPresent(field);
+            if (shorterField.isEmpty()) {
+                throw new InvalidFieldException(PREFIXED_EMPTY);
+            }
+            nameSuffix = Field.extractNameSuffix(shorterField);
+            return IndirectField.create(id, nameSuffix[0], nameSuffix[1], previous, next);
+        }
+        nameSuffix = Field.extractNameSuffix(field);
+        return NormalField.create(id, nameSuffix[0], nameSuffix[1], previous, next);
     }
 
-    private static String removeLeadingCharIfPresent(String fieldName) {
+    private static String removeLeadingCharIfPresent(final String fieldName) {
         return fieldName.isEmpty() ? fieldName : fieldName.substring(1);
     }
 }

@@ -7,9 +7,11 @@ vendor
 # build dirs
 build
 .gradle
+out
 
 # Intellij
 .idea
 *.iml
-
+*.ipr
+*.iws
 gradle.properties

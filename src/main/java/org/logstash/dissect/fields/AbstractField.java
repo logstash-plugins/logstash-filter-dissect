@@ -1,12 +1,8 @@
 package org.logstash.dissect.fields;
 
-import org.logstash.Event;
 import org.logstash.dissect.Delimiter;
-import org.logstash.dissect.ValueResolver;
 
-import java.util.Map;
-
-public abstract class AbstractField implements Field {
+public abstract class AbstractField implements Field, Comparable<Field> {
     /*
         These ordinal constants establish the saveable field sort order.
         Skip fields are not saveable so should not be in the saveable fields list but
@@ -16,40 +12,49 @@ public abstract class AbstractField implements Field {
         In the Append field group order is important. Each Append fields ordinal
         is an offset off of APPEND_ORDINAL_BASE.
      */
-    public static final int SKIP_ORDINAL_LOWEST = 0;
-    public static final int NORMAL_ORDINAL_LOWER = 1;
-    public static final int APPEND_ORDINAL_BASE = 100;
-    public static final int INDIRECT_ORDINAL_HIGHER = 1000;
-    public static final int MISSING_ORDINAL_HIGHEST = 100000;
 
     private final int ordinal;
-    private final String name;
-
     private final Delimiter previous;
     private final Delimiter next;
+    private final String name;
+    private final String suffix;
+    private final Integer id;
 
-    protected AbstractField(String s, int ord) {
-        name = s;
+    AbstractField(final String name, final String suffix, final int ord) {
         ordinal = ord;
+        this.name = name;
+        this.suffix = suffix;
         previous = null;
         next = null;
+        id = 0;
     }
 
-    public AbstractField(String name, int ordinal, Delimiter previous, Delimiter next) {
-        this.ordinal = ordinal;
+    AbstractField(final int id, final String name, final String suffix, final int ordinal, final Delimiter previous, final Delimiter next) {
         this.name = name;
+        this.suffix = suffix;
+        this.ordinal = ordinal;
         this.previous = previous;
         this.next = next;
+        if (this.next != null) {
+            this.next.setGreedy(this.suffix.contains(GREEDY_SUFFIX));
+        }
+        this.id = id;
     }
 
     @Override
-    public abstract boolean saveable();
+    public int compareTo(Field o) {
+        return Integer.compare(id, o.hashCode());
+    }
 
     @Override
-    public abstract void append(Map<String, Object> map, ValueResolver values);
+    public int hashCode() {
+        return id;
+    }
 
     @Override
-    public abstract void append(Event event, ValueResolver values);
+    public boolean equals(Object obj) {
+        return obj instanceof Field && hashCode() == obj.hashCode();
+    }
 
     @Override
     public String name() {
@@ -57,12 +62,17 @@ public abstract class AbstractField implements Field {
     }
 
     @Override
+    public int id() {
+        return id;
+    }
+
+    @Override
     public int ordinal() {
         return ordinal;
     }
 
-    public String joinString() {
-        if (previous == null) {
+    String joinString() {
+        if (previous == null || previous.size() == 0) {
             return " ";
         }
         return previous.getDelimiter();
@@ -78,14 +88,12 @@ public abstract class AbstractField implements Field {
         return previous;
     }
 
-    protected String buildToString(String className) {
-        final StringBuilder sb = new StringBuilder(className);
-        sb.append("{");
-        sb.append("name=").append(this.name());
-        sb.append(", ordinal=").append(this.ordinal());
-        sb.append(", previous=").append(this.previous);
-        sb.append(", next=").append(this.next);
-        sb.append('}');
-        return sb.toString();
+    String buildToString(final String className) {
+        return className + '{' +
+                "name=" + this.name() +
+                ", ordinal=" + this.ordinal() +
+                ", previous=" + this.previous +
+                ", next=" + this.next +
+                '}';
     }
 }

@@ -7,23 +7,16 @@ import org.logstash.dissect.ValueResolver;
 import java.util.Map;
 
 public final class NormalField extends AbstractField {
-
-    public static final Field MISSING = new NormalField("missing_field", MISSING_ORDINAL_HIGHEST);
-
-    private NormalField(String name, int ordinal) {
-        super(name, ordinal);
+    public NormalField(final String name, final String suffix, final int ordinal) {
+        super(name, suffix, ordinal);
     }
 
-    private NormalField(String name, Delimiter previous, Delimiter next) {
-        super(name, NORMAL_ORDINAL_LOWER, previous, next);
+    private NormalField(final int id, final String name, final String suffix, final Delimiter previous, final Delimiter next) {
+        super(id, name, suffix, NORMAL_ORDINAL_LOWER, previous, next);
     }
 
-    private NormalField(String name, int ordinal, Delimiter previous, Delimiter next) {
-        super(name, ordinal, previous, next);
-    }
-
-    public static Field create(String name, Delimiter previous, Delimiter next) {
-        return new NormalField(name, previous, next);
+    public static Field create(final int id, final String name, final String suffix, final Delimiter previous, final Delimiter next) {
+        return new NormalField(id, name, suffix, previous, next);
     }
 
     @Override
@@ -32,13 +25,13 @@ public final class NormalField extends AbstractField {
     }
 
     @Override
-    public void append(Map<String, Object> keyValueMap, ValueResolver values) {
-        keyValueMap.put(this.name(), values.get(this));
+    public void append(final Map<String, Object> keyValueMap, final ValueResolver values) {
+        keyValueMap.put(this.name(), values.get(this.id()));
     }
 
     @Override
-    public void append(Event event, ValueResolver values) {
-        event.setField(this.name(), values.get(this));
+    public void append(final Event event, final ValueResolver values) {
+        event.setField(this.name(), values.get(this.id()));
     }
 
     @Override

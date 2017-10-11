@@ -5,24 +5,21 @@ import org.logstash.dissect.Delimiter;
 import org.logstash.dissect.ValueResolver;
 
 import java.util.Map;
+import java.util.regex.Matcher;
 
 public final class AppendField extends AbstractField {
 
-    private AppendField(String s, int ord, Delimiter previous, Delimiter next) {
-        super(s, ord, previous, next);
+    private AppendField(final int id, final String name, String suffix, final int ord, final Delimiter previous, final Delimiter next) {
+        super(id, name, suffix, ord, previous, next);
     }
 
-    public static Field create(String s, Delimiter previous, Delimiter next) {
-        if (hasOrdinal(s)) {
-            String[] parts = s.split("\\W|_");
-            return new AppendField(parts[0], APPEND_ORDINAL_BASE + Integer.valueOf(parts[1]), previous, next);
+    public static Field create(final int id, final String name, String suffix, final Delimiter previous, final Delimiter next) {
+        final Matcher m = ORDINAL_REGEX.matcher(suffix);
+        if (m.find()) {
+            return new AppendField(id, name, suffix, APPEND_ORDINAL_BASE + Integer.parseInt(m.group()), previous, next);
         } else {
-            return new AppendField(s, APPEND_ORDINAL_BASE, previous, next);
+            return new AppendField(id, name, suffix, APPEND_ORDINAL_BASE, previous, next);
         }
-    }
-
-    private static boolean hasOrdinal(String s) {
-        return s.contains("/");
     }
 
     @Override
@@ -31,22 +28,22 @@ public final class AppendField extends AbstractField {
     }
 
     @Override
-    public void append(Map<String, Object> keyValueMap, ValueResolver values) {
+    public void append(final Map<String, Object> keyValueMap, final ValueResolver values) {
         if (keyValueMap.containsKey(this.name())) {
-            Object old = keyValueMap.get(this.name());
-            keyValueMap.put(this.name(), old.toString() + joinString() + values.get(this));
+            final Object old = keyValueMap.get(this.name());
+            keyValueMap.put(this.name(), old.toString() + joinString() + values.get(this.id()));
         } else {
-            keyValueMap.put(this.name(), values.get(this));
+            keyValueMap.put(this.name(), values.get(this.id()));
         }
     }
 
     @Override
-    public void append(Event event, ValueResolver values) {
+    public void append(final Event event, final ValueResolver values) {
         if (event.includes(this.name())) {
-            Object old = event.getField(this.name());
-            event.setField(this.name(), old.toString() + joinString() + values.get(this));
+            final Object old = event.getField(this.name());
+            event.setField(this.name(), old.toString() + joinString() + values.get(this.id()));
         } else {
-            event.setField(this.name(), values.get(this));
+            event.setField(this.name(), values.get(this.id()));
         }
     }
 

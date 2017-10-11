@@ -8,20 +8,21 @@ import java.util.Map;
 
 public final class SkipField extends AbstractField {
 
-    private SkipField(String s, Delimiter previous, Delimiter next) {
-        super(s, SKIP_ORDINAL_LOWEST, previous, next);
+    private SkipField(final int id, final String name, String suffix, final Delimiter previous, final Delimiter next) {
+        super(id, name, suffix, SKIP_ORDINAL_LOWEST, previous, next);
+
     }
 
-    public static Field create(String name, Delimiter previous, Delimiter next) {
-        return new SkipField(name, previous, next);
-    }
-
-    @Override
-    public void append(Event event, ValueResolver values) {
+    public static Field create(final int id, final String name, String suffix, final Delimiter previous, final Delimiter next) {
+        return new SkipField(id, name, suffix, previous, next);
     }
 
     @Override
-    public void append(Map<String, Object> keyValueMap, ValueResolver values) {
+    public void append(final Event event, final ValueResolver values) {
+    }
+
+    @Override
+    public void append(final Map<String, Object> keyValueMap, final ValueResolver values) {
     }
 
     @Override

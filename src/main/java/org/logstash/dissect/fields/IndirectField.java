@@ -8,12 +8,12 @@ import java.util.Map;
 
 public final class IndirectField extends AbstractField {
 
-    private IndirectField(String s, Delimiter previous, Delimiter next) {
-        super(s, INDIRECT_ORDINAL_HIGHER, previous, next);
+    private IndirectField(final int id, final String name, final String suffix, final Delimiter previous, final Delimiter next) {
+        super(id, name, suffix, INDIRECT_ORDINAL_HIGHER, previous, next);
     }
 
-    public static Field create(String s, Delimiter previous, Delimiter next) {
-        return new IndirectField(s, previous, next);
+    public static Field create(final int id, final String name, final String suffix, final Delimiter previous, final Delimiter next) {
+        return new IndirectField(id, name, suffix, previous, next);
     }
 
     @Override
@@ -22,35 +22,35 @@ public final class IndirectField extends AbstractField {
     }
 
     @Override
-    public void append(Map<String, Object> keyValueMap, ValueResolver values) {
-        String indirectName = anyValue(name(), keyValueMap, values);
+    public void append(final Map<String, Object> keyValueMap, final ValueResolver values) {
+        final String indirectName = anyValue(name(), keyValueMap, values);
         if (!indirectName.isEmpty()) {
-            keyValueMap.put(indirectName, values.get(this));
+            keyValueMap.put(indirectName, values.get(this.id()));
         }
     }
 
     @Override
-    public void append(Event event, ValueResolver values) {
-        String indirectName = anyValue(name(), event, values);
+    public void append(final Event event, final ValueResolver values) {
+        final String indirectName = anyValue(name(), event, values);
         if (!indirectName.isEmpty()) {
-            event.setField(indirectName, values.get(this));
+            event.setField(indirectName, values.get(this.id()));
         }
     }
 
-    private String anyValue(String key, Event event, ValueResolver values) {
+    private String anyValue(final String key, final Event event, final ValueResolver values) {
         if (event.includes(key)) {
-            Object val = event.getField(key);
+            final Object val = event.getField(key);
             return String.valueOf(val);
         }
-        return values.get(values.find(key, this));
+        return values.getOtherByName(key, this.id());
     }
 
-    protected String anyValue(String key, Map<String, Object> map, ValueResolver values) {
+    private String anyValue(final String key, final Map<String, Object> map, final ValueResolver values) {
         if (map.containsKey(key)) {
-            Object val = map.get(key);
+            final Object val = map.get(key);
             return String.valueOf(val);
         }
-        return values.get(values.find(key, this));
+        return values.getOtherByName(key, this.id());
     }
 
     @Override

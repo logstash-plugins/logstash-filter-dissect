@@ -156,7 +156,7 @@ filter plugins.
 &nbsp;
 
 [id="plugins-{type}s-{plugin}-convert_datatype"]
-===== `convert_datatype` 
+===== `convert_datatype`
 
   * Value type is <<hash,hash>>
   * Default value is `{}`
@@ -177,7 +177,7 @@ filter {
 }
 
 [id="plugins-{type}s-{plugin}-mapping"]
-===== `mapping` 
+===== `mapping`
 
   * Value type is <<hash,hash>>
   * Default value is `{}`
@@ -200,7 +200,7 @@ This is useful if you want to keep the field `description` but also
 dissect it some more.
 
 [id="plugins-{type}s-{plugin}-tag_on_failure"]
-===== `tag_on_failure` 
+===== `tag_on_failure`
 
   * Value type is <<array,array>>
   * Default value is `["_dissectfailure"]`

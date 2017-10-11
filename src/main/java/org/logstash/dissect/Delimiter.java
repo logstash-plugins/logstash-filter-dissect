@@ -10,15 +10,16 @@ public final class Delimiter {
     private final byte[] needle;
     private final String delimiter;
     private final DelimiterLocator strategy;
+    private boolean greedy;
 
-    private Delimiter(String delimiter, byte[] bytes, DelimiterLocator strategy) {
+    private Delimiter(final String delimiter, final byte[] bytes, final DelimiterLocator strategy) {
         this.delimiter = delimiter;
         this.needle = bytes;
         this.strategy = strategy;
     }
 
-    public static Delimiter create(String delim) {
-        byte[] bytes = delim.getBytes();
+    public static Delimiter create(final String delim) {
+        final byte[] bytes = delim.getBytes();
         switch (bytes.length) {
             case 0:
                 return new Delimiter(delim, bytes, ZeroByteLocator.INSTANCE);
@@ -31,7 +32,7 @@ public final class Delimiter {
         }
     }
 
-    public int indexOf(byte[] haystack, int offset) {
+    public int indexOf(final byte[] haystack, final int offset) {
         return strategy.indexOf(this.needle, haystack, offset);
     }
 
@@ -43,12 +44,19 @@ public final class Delimiter {
         return this.delimiter;
     }
 
+
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder("Delimiter{");
-        sb.append("delimiter='").append(delimiter);
-        sb.append("', size=").append(size());
-        sb.append('}');
-        return sb.toString();
+        return "Delimiter{" + "delimiter='" + delimiter +
+                "', size=" + size() +
+                '}';
+    }
+
+    public boolean isGreedy() {
+        return greedy;
+    }
+
+    public void setGreedy(boolean greedy) {
+        this.greedy = greedy;
     }
 }
