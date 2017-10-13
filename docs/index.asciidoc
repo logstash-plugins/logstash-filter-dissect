@@ -110,13 +110,48 @@ append and indirect cannot be combined and will fail validation. +
 ===============================
 
 *Delimiter repetition:* +
-In the source text if a field has variable width padded with delimiters, the padding will be ignored. +
-e.g. for texts of:
+Delimiter repetition in the source text can occur unintentionally or intentionally. +
+
+[NOTE]
+===============================
+From version 1.1.1 onwards, repeated delimiter handling has changed to handle
+the unintentional repetition case by default because this is far more common
+than the intentional repetition case. +
+*If you are already using Dissect AND your source text has intentional repetition,
+you will need to change your configs.*
+===============================
+
+**Unintentional repetition** +
+This is caused when the source generator writes empty values in between delimiters. A typical example
+of this is CSV style sections. +
+For a dissection of `%{name},%{addr1},%{addr2},%{addr3},%{city},%{zip}`; we are expecting 6 fields. +
+For texts of:
 ....
-00000043 ViewReceiver  I
-000000b3 Peer          I
+Jane Doe,4321 Fifth Avenue,,,New York,87432
 ....
-with a dissection of `%{a} %{b} %{c}`; the padding is ignored, `event.get([c]) -> "I"`
+The repeated commas will not be consumed by default so the fields "addr2" and "addr3" will
+be added to the event with empty string values. +
+
+**Intentional repetition** +
+In the source text, when the source generator deliberately writes a variable width field with extra delimiters to
+visually align them then you **MUST** use the `->` suffix to tell
+Dissect to consume the all the delimiters until the next non-delimiter character is reached. +
+For texts of (padding after the field):
+....
+00000043 ViewReceiver    I
+000000b3 Peer            I
+....
+For a dissection of `%{a} %{b->} %{c}`; the padding is consumed, `event.get([c])` => `'I'` not `'     I'`. +
+Using the `%{field->}` means you are opting-in to repeated delimiter consumption for the delimiter
+found after that field. +
+For texts of (padding before the field):
+....
+00000043 ViewReceiver I
+000000b3         Peer I
+....
+For a dissection of `%{a->} %{b} %{c}`; the padding is consumed. +
+**Important: always add the `->` suffix in the field on the _left_ of the padding.** +
+
 
 [NOTE]
 ====
