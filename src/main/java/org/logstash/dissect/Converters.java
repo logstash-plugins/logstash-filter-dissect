@@ -2,21 +2,24 @@ package org.logstash.dissect;
 
 import org.logstash.Event;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+
 public enum Converters implements Converter {
     INT {
         @Override
         public void convert(final Event e, final String src) {
             final Object value = e.getField(src);
-            final long v = new Double(String.valueOf(value)).longValue();
-            e.setField(src, v);
+            BigDecimal bd = new BigDecimal(String.valueOf(value)).setScale(12, RoundingMode.FLOOR);
+            e.setField(src, bd.longValue());
         }
     },
     FLOAT {
         @Override
         public void convert(final Event e, final String src) {
             final Object value = e.getField(src);
-            final double v = Double.parseDouble(String.valueOf(value));
-            e.setField(src, v);
+            BigDecimal bd = new BigDecimal(String.valueOf(value)).setScale(12, RoundingMode.FLOOR);
+            e.setField(src, bd.doubleValue());
         }
     },
     NULL_CONVERTER {

@@ -59,11 +59,18 @@ public class ConverterTest {
     }
 
     @Test
+    public void convertEventFieldToDoubleFromBiiiigIntString() {
+        final String src = "[foo]";
+        final Event e = subject(src, "4394740425750718628");
+        Converters.select("int").convert(e, src);
+        assertThat(e.getField(src)).isEqualTo(4394740425750718628L);
+    }
+
+    @Test
     public void convertEventFieldToIntFromIncompatibleObject() {
         final String src = "[foo]";
         final Event e = subject(src, new HashMap());
         exception.expect(NumberFormatException.class);
-        exception.expectMessage("For input string: \"{}\"");
         Converters.select("int").convert(e, src);
     }
 
@@ -96,7 +103,6 @@ public class ConverterTest {
         final String src = "[foo]";
         final Event e = subject(src, new HashMap());
         exception.expect(NumberFormatException.class);
-        exception.expectMessage("For input string: \"{}\"");
         Converters.select("float").convert(e, src);
     }
 
@@ -105,7 +111,6 @@ public class ConverterTest {
         final String src = "[foo]";
         final Event e = subject(src, 1234);
         exception.expect(NumberFormatException.class);
-        exception.expectMessage("For input string: \"null\"");
         Converters.select("int").convert(e, "[bar]");
     }
 
@@ -114,7 +119,6 @@ public class ConverterTest {
         final String src = "[foo]";
         final Event e = subject(src, 1234);
         exception.expect(NumberFormatException.class);
-        exception.expectMessage("For input string: \"null\"");
         Converters.select("float").convert(e, "[bar]");
     }
 }
