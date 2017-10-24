@@ -156,6 +156,38 @@ describe LogStash::Filters::Dissect do
     end
   end
 
+  describe "Integer datatype conversion, handle large integers" do
+    let(:config) do <<-CONFIG
+      filter {
+        dissect {
+          convert_datatype => {
+            "big_number" => "int"
+          }
+        }
+      }
+    CONFIG
+    end
+    sample("big_number" => "43947404257507186289") do
+      expect(subject.get("big_number")).to eq(43947404257507186289)
+    end
+  end
+
+  describe "Float datatype conversion, handle large floats" do
+    let(:config) do <<-CONFIG
+      filter {
+        dissect {
+          convert_datatype => {
+            "big_number" => "float"
+          }
+        }
+      }
+    CONFIG
+    end
+    sample("big_number" => "43947404257507186289.345324") do
+      expect(subject.get("big_number")).to eq(BigDecimal.new("43947404257507186289.345324"))
+    end
+  end
+
   describe "dissect with skip and append" do
     let(:config) do <<-CONFIG
         filter {

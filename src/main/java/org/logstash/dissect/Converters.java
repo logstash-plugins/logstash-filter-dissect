@@ -2,21 +2,21 @@ package org.logstash.dissect;
 
 import org.logstash.Event;
 
+import java.math.BigDecimal;
+
 public enum Converters implements Converter {
     INT {
         @Override
         public void convert(final Event e, final String src) {
             final Object value = e.getField(src);
-            final long v = new Double(String.valueOf(value)).longValue();
-            e.setField(src, v);
+            e.setField(src, new BigDecimal(String.valueOf(value)).toBigInteger());
         }
     },
     FLOAT {
         @Override
         public void convert(final Event e, final String src) {
             final Object value = e.getField(src);
-            final double v = Double.parseDouble(String.valueOf(value));
-            e.setField(src, v);
+            e.setField(src, new BigDecimal(String.valueOf(value)));
         }
     },
     NULL_CONVERTER {

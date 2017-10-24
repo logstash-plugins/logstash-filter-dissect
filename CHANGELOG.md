@@ -1,3 +1,8 @@
+## 1.1.1
+  - Fix for "Missing field values cause dissected fields to be out of position" issue. See updated documentation.
+  - Fix for "Check empty fields" issue, empty fields handled better.
+  - Fix for "Integer conversion does not handle big integers".
+  
 ## 1.0.12
   - Fix some documentation issues
 
