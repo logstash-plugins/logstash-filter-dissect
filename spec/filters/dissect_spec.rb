@@ -167,8 +167,8 @@ describe LogStash::Filters::Dissect do
       }
     CONFIG
     end
-    sample("big_number" => "4394740425750718628") do
-      expect(subject.get("big_number")).to eq(4394740425750718628)
+    sample("big_number" => "43947404257507186289") do
+      expect(subject.get("big_number")).to eq(43947404257507186289)
     end
   end
 
@@ -183,8 +183,8 @@ describe LogStash::Filters::Dissect do
       }
     CONFIG
     end
-    sample("big_number" => "4394740425750718628.345324") do
-      expect(subject.get("big_number")).to eq(4394740425750718628.345324)
+    sample("big_number" => "43947404257507186289.345324") do
+      expect(subject.get("big_number")).to eq(BigDecimal.new("43947404257507186289.345324"))
     end
   end
 

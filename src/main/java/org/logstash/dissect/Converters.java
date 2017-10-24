@@ -3,23 +3,20 @@ package org.logstash.dissect;
 import org.logstash.Event;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 
 public enum Converters implements Converter {
     INT {
         @Override
         public void convert(final Event e, final String src) {
             final Object value = e.getField(src);
-            BigDecimal bd = new BigDecimal(String.valueOf(value)).setScale(12, RoundingMode.FLOOR);
-            e.setField(src, bd.longValue());
+            e.setField(src, new BigDecimal(String.valueOf(value)).toBigInteger());
         }
     },
     FLOAT {
         @Override
         public void convert(final Event e, final String src) {
             final Object value = e.getField(src);
-            BigDecimal bd = new BigDecimal(String.valueOf(value)).setScale(12, RoundingMode.FLOOR);
-            e.setField(src, bd.doubleValue());
+            e.setField(src, new BigDecimal(String.valueOf(value)));
         }
     },
     NULL_CONVERTER {

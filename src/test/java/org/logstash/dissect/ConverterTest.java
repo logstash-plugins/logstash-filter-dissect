@@ -5,9 +5,11 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.logstash.Event;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.HashMap;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class ConverterTest {
     @Rule
@@ -25,11 +27,7 @@ public class ConverterTest {
         final Event e = subject(src, "1234");
         Converters.select("int").convert(e, src);
         Object actual = e.getField(src);
-        Object expected = 1234L;
-        if (actual instanceof Integer) {
-            expected = 1234;
-        }
-        assertThat(actual).isEqualTo(expected);
+        assertThat(actual).isEqualTo(new BigInteger("1234"));
     }
 
     @Test
@@ -38,11 +36,7 @@ public class ConverterTest {
         final Event e = subject(src, "12.34");
         Converters.select("int").convert(e, src);
         Object actual = e.getField(src);
-        Object expected = 12L;
-        if (actual instanceof Integer) {
-            expected = 12;
-        }
-        assertThat(actual).isEqualTo(expected);
+        assertThat(actual).isEqualTo(new BigInteger("12"));
     }
 
     @Test
@@ -51,19 +45,16 @@ public class ConverterTest {
         final Event e = subject(src, 12.34);
         Converters.select("int").convert(e, src);
         Object actual = e.getField(src);
-        Object expected = 12L;
-        if (actual instanceof Integer) {
-            expected = 12;
-        }
-        assertThat(actual).isEqualTo(expected);
+        assertThat(actual).isEqualTo(new BigInteger("12"));
     }
 
     @Test
-    public void convertEventFieldToDoubleFromBiiiigIntString() {
+    public void convertEventFieldToIntFromBiiiigIntString() {
         final String src = "[foo]";
-        final Event e = subject(src, "4394740425750718628");
+        final String value = "439474042575071862892";
+        final Event e = subject(src, value);
         Converters.select("int").convert(e, src);
-        assertThat(e.getField(src)).isEqualTo(4394740425750718628L);
+        assertThat(e.getField(src)).isEqualTo(new BigInteger(value));
     }
 
     @Test
@@ -79,7 +70,7 @@ public class ConverterTest {
         final String src = "[foo]";
         final Event e = subject(src, "12.34");
         Converters.select("float").convert(e, src);
-        assertThat(e.getField(src)).isEqualTo(12.34);
+        assertThat(e.getField(src)).isEqualTo(new BigDecimal("12.34"));
     }
 
     @Test
@@ -87,7 +78,7 @@ public class ConverterTest {
         final String src = "[foo]";
         final Event e = subject(src, "1234");
         Converters.select("float").convert(e, src);
-        assertThat(e.getField(src)).isEqualTo(1234.0);
+        assertThat(e.getField(src)).isEqualTo(new BigDecimal("1234"));
     }
 
     @Test
@@ -95,7 +86,7 @@ public class ConverterTest {
         final String src = "[foo]";
         final Event e = subject(src, 1234);
         Converters.select("float").convert(e, src);
-        assertThat(e.getField(src)).isEqualTo(1234.0);
+        assertThat(e.getField(src)).isEqualTo(new BigDecimal("1234"));
     }
 
     @Test
