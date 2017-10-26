@@ -20,7 +20,8 @@ include::{include_path}/plugin_header.asciidoc[]
 
 ==== Description
 
-The Dissect filter is a kind of split operation. Unlike a regular split operation where one delimiter is applied to the whole string, this operation applies a set of delimiters # to a string value. +
+The Dissect filter is a kind of split operation. Unlike a regular split operation where one delimiter is applied to
+the whole string, this operation applies a set of delimiters to a string value. +
 Dissect does not use regular expressions and is very fast. +
 However, if the structure of your text varies from line to line then Grok is more suitable. +
 There is a hybrid case where Dissect can be used to de-structure the section of the line that is reliably repeated and then Grok can be used on the remaining field values with # more regex predictability and less overall work to do. +
@@ -34,10 +35,10 @@ The dissection is described using a set of `%{}` sections:
 
 A *field* is the text from `%` to `}` inclusive.
 
-A *delimiter* is the text between `}` and `%` characters.
+A *delimiter* is the text between a `}` and next `%{` characters.
 
 [NOTE]
-delimiters can't contain these `}{%` characters.
+Any set of characters that do not fit `%{`, `'not }'`, `}` pattern is a delimiter.
 
 The config might look like this:
 ....
@@ -49,7 +50,8 @@ The config might look like this:
     }
   }
 ....
-When dissecting a string from left to right, text is captured upto the first delimiter - this captured text is stored in the first field. This is repeated for each field/# delimiter pair thereafter until the last delimiter is reached, then *the remaining text is stored in the last field*. +
+When dissecting a string from left to right, text is captured upto the first delimiter - this captured text is stored in the first field.
+This is repeated for each field/# delimiter pair thereafter until the last delimiter is reached, then *the remaining text is stored in the last field*. +
 
 *The Key:* +
 The key is the text between the `%{` and `}`, exclusive of the ?, +, & prefixes and the ordinal suffix. +
@@ -109,49 +111,80 @@ append and indirect cannot be combined and will fail validation. +
 `%{&+something}` will add a value to the `+something` key, again probably unintended. +
 ===============================
 
-*Delimiter repetition:* +
-Delimiter repetition in the source text can occur unintentionally or intentionally. +
+*Behaviour when multiple delimiter are found in the source text:* +
 
-[NOTE]
+[IMPORTANT]
 ===============================
-From version 1.1.1 onwards, repeated delimiter handling has changed to handle
-the unintentional repetition case by default because this is far more common
-than the intentional repetition case. +
-*If you are already using Dissect AND your source text has intentional repetition,
-you will need to change your configs.*
+Starting from version 1.1.1 of this plugin, multiple found delimiter handling has changed.
+Now multiple delimters will be seen as missing fields by default and not padding.
+If you are already using Dissect and your source text has fields padded with extra delimiters,
+you will need to change your config. Please read the section below.
 ===============================
 
-**Unintentional repetition** +
-This is caused when the source generator writes empty values in between delimiters. A typical example
-of this is CSV style sections. +
-For a dissection of `%{name},%{addr1},%{addr2},%{addr3},%{city},%{zip}`; we are expecting 6 fields. +
-For texts of:
+**Empty data between delimiters** +
+Given this text as the sample used to create a dissection:
+....
+John Smith,Big Oaks,Wood Lane,Hambledown,Canterbury,CB34RT
+....
+The created dissection, with 6 fields, is:
+....
+%{name},%{addr1},%{addr2},%{addr3},%{city},%{zip}
+....
+When a line like this is processed:
 ....
 Jane Doe,4321 Fifth Avenue,,,New York,87432
 ....
-The repeated commas will not be consumed by default so the fields "addr2" and "addr3" will
-be added to the event with empty string values. +
+Dissect will create an event with empty fields for `addr2 and addr3` like so:
+....
+{
+  "name": "Jane Doe",
+  "addr1": "4321 Fifth Avenue",
+  "addr2": "",
+  "addr3": "",
+  "city": "New York"
+  "zip": "87432"
+}
+....
 
-**Intentional repetition** +
-In the source text, when the source generator deliberately writes a variable width field with extra delimiters to
-visually align them then you **MUST** use the `->` suffix to tell
-Dissect to consume the all the delimiters until the next non-delimiter character is reached. +
-For texts of (padding after the field):
+**Delimiters used as padding to visually align fields** +
+Padding to the right hand side +
+Given these texts as the samples used to create a dissection:
 ....
-00000043 ViewReceiver    I
-000000b3 Peer            I
+00000043 ViewReceive     machine-321
+f3000a3b Calc            machine-123
 ....
-For a dissection of `%{a} %{b->} %{c}`; the padding is consumed, `event.get([c])` => `'I'` not `'     I'`. +
-Using the `%{field->}` means you are opting-in to repeated delimiter consumption for the delimiter
-found after that field. +
-For texts of (padding before the field):
+The dissection, with 3 fields, is:
 ....
-00000043 ViewReceiver I
-000000b3         Peer I
+%{id} %{function->} %{server}
 ....
-For a dissection of `%{a->} %{b} %{c}`; the padding is consumed. +
-**Important: always add the `->` suffix in the field on the _left_ of the padding.** +
+Note, above, the second field has a `->` suffix, this tells Dissect to ignore padding to its right. +
+Dissect will create these events:
+....
+{
+  "id": "00000043",
+  "function": "ViewReceive",
+  "server": "machine-123"
+}
+{
+  "id": "f3000a3b",
+  "function": "Calc",
+  "server": "machine-321"
+}
+....
+[IMPORTANT]
+Always add the `->` suffix to the field on the left of the padding. +
 
+Padding to the left hand side (to the human eye) +
+Given these texts as the samples used to create a dissection:
+....
+00000043     ViewReceive machine-321
+f3000a3b            Calc machine-123
+....
+The dissection, with 3 fields, is now:
+....
+%{id->} %{function} %{server}
+....
+Here the `->` suffix moves to the `id` field because Dissect sees the padding as being to the right of the `id` field. +
 
 [NOTE]
 ====
