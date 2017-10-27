@@ -42,7 +42,7 @@ task :check => [:vendor, :spec]
 
 task :travis_test => [:travis_vendor, :spec]
 
-desc "Run vendor with custom Logstash path"
+desc "Run full check with custom Logstash path"
 task :custom_ls_check, :ls_dir do |task, args|
   ls_path = args[:ls_dir]
   system(custom_ls_path_shell_script(ls_path))
