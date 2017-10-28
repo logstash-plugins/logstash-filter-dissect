@@ -111,7 +111,7 @@ append and indirect cannot be combined and will fail validation. +
 `%{&+something}` will add a value to the `+something` key, again probably unintended. +
 ===============================
 
-===== Multiple Consecutive Delimiter Handling
+==== Multiple Consecutive Delimiter Handling
 
 [IMPORTANT]
 ===============================
@@ -121,7 +121,7 @@ If you are already using Dissect and your source text has fields padded with ext
 you will need to change your config. Please read the section below.
 ===============================
 
-====== Empty data between delimiters
+===== Empty data between delimiters
 Given this text as the sample used to create a dissection:
 ....
 John Smith,Big Oaks,Wood Lane,Hambledown,Canterbury,CB34RY
@@ -146,7 +146,7 @@ Dissect will create an event with empty fields for `addr2 and addr3` like so:
 }
 ....
 
-====== Delimiters used as padding to visually align fields
+===== Delimiters used as padding to visually align fields
 *Padding to the right hand side*
 
 Given these texts as the samples used to create a dissection:
@@ -188,7 +188,7 @@ The dissection, with 3 fields, is now:
 ....
 Here the `->` suffix moves to the `id` field because Dissect sees the padding as being to the right of the `id` field. +
 
-===== Conditional processing
+==== Conditional processing
 
 You probably want to use this filter inside an `if` block. +
 This ensures that the event contains a field value with a suitable structure for the dissection.
