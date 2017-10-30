@@ -24,7 +24,8 @@ The Dissect filter is a kind of split operation. Unlike a regular split operatio
 the whole string, this operation applies a set of delimiters to a string value. +
 Dissect does not use regular expressions and is very fast. +
 However, if the structure of your text varies from line to line then Grok is more suitable. +
-There is a hybrid case where Dissect can be used to de-structure the section of the line that is reliably repeated and then Grok can be used on the remaining field values with # more regex predictability and less overall work to do. +
+There is a hybrid case where Dissect can be used to de-structure the section of the line that is reliably repeated and
+then Grok can be used on the remaining field values with more regex predictability and less overall work to do. +
 
 A set of fields and delimiters is called a *dissection*.
 
