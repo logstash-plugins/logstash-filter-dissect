@@ -1,3 +1,6 @@
+## 1.1.2
+  - Update gemspec summary
+
 ## 1.1.1
   - Fix for "Missing field values cause dissected fields to be out of position" issue. See updated documentation.
   - Fix for "Check empty fields" issue, empty fields handled better.
