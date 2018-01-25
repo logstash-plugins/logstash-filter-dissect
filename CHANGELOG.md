@@ -1,3 +1,8 @@
+## 1.1.3
+  - Test for "Improve field regular expression accuracy to include prefix and suffix options", fixed in 1.1.1
+  - Fix for "Dissector mapping, field found in event but it was empty" caused by multibyte UTF8, bytes size vs string size
+  - Fix for "Bug: if a dissection is defined with a newline as part of a delimiter it is ignored."
+
 ## 1.1.2
   - Update gemspec summary
 

@@ -391,6 +391,35 @@ public class DissectorTest {
         assertEquals("666", object.get("f"));
     }
 
+    // https://github.com/logstash-plugins/logstash-filter-dissect/issues/46
+    @Test
+    public void testMultibyteCharacterStrings() throws Exception {
+        final Map<String, Object> object = new HashMap<>();
+        subject("%{a}.࿏.%{b}")
+                .dissect("⟳༒.࿏.༒⟲".getBytes(), object);
+        assertEquals("⟳༒", object.get("a"));
+        assertEquals("༒⟲", object.get("b"));
+    }
+    @Test
+    public void testSingleMultibyteCharacterString() throws Exception {
+        final Map<String, Object> object = new HashMap<>();
+        subject("%{a}")
+                .dissect("子".getBytes(), object);
+        assertEquals("子", object.get("a"));
+    }
+
+    // https://github.com/logstash-plugins/logstash-filter-dissect/issues/42
+    // https://github.com/logstash-plugins/logstash-filter-dissect/issues/47
+    @Test
+    public void testNewlineInDelim() throws Exception {
+        final Map<String, Object> object = new HashMap<>();
+        subject("%{a}{\n}%{b}")
+                .dissect("aaa{\n}bbb".getBytes(), object);
+        assertEquals("aaa", object.get("a"));
+        assertEquals("bbb", object.get("b"));
+    }
+
+
     @Test
     @Ignore("Skipping long running test used only when profiling")
     public void profileRepeatDelimsArgs() throws Exception {
@@ -408,5 +437,4 @@ public class DissectorTest {
         assertEquals("bar", object.get("b"));
         assertEquals("baz", object.get("c"));
     }
-
 }

@@ -12,7 +12,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Dissector {
-    private static final Pattern DELIMITER_FIELD_PATTERN = Pattern.compile("(.*?)%\\{([^}]*?)}");
+    private static final Pattern DELIMITER_FIELD_PATTERN = Pattern.compile("(.*?)%\\{([^}]*?)}", Pattern.DOTALL);
     private final List<Field> fields;
     // skip fields are not savable, so will be excluded from the saveableFields list
     // saveable fields are field + values that need to be set on the Event or HashMap

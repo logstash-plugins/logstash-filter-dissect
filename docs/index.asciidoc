@@ -253,6 +253,11 @@ filter {
   * Default value is `{}`
 
 A hash of dissections of `field => value` +
+[IMPORTANT]
+Don't use an escaped newline `\n` in the value, it will be seen as two characters `\` + `n`+
+Instead use actual line breaks in the config.+
+Also use single quotes to define the value if it contains double quotes.
+
 A later dissection can be done on values from a previous dissection or they can be independent.
 
 For example
@@ -260,7 +265,9 @@ For example
 filter {
   dissect {
     mapping => {
-      "message" => "%{field1} %{field2} %{description}"
+      # using an actual line break
+      "message" => '"%{field1}" "%{field2}"
+ "%{description}"'
       "description" => "%{field3} %{field4} %{field5}"
     }
   }

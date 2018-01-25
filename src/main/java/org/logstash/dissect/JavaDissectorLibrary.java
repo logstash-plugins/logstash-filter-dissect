@@ -176,9 +176,10 @@ public class JavaDissectorLibrary implements Library {
                             createHashInclField(ctx, dissectPair.key())));
                     continue;
                 }
-                final int result = dissectPair.dissector().dissect(src.getBytes(), event);
+                final byte[] bytes = src.getBytes();
+                final int result = dissectPair.dissector().dissect(bytes, event);
                 // a good result will be the end of the source string
-                if (result == src.strLength()) {
+                if (result == bytes.length) {
                     if (runMatched) {
                         invokeFilterMatched(ctx, rubyEvent);
                     }
