@@ -395,16 +395,19 @@ public class DissectorTest {
     @Test
     public void testMultibyteCharacterStrings() throws Exception {
         final Map<String, Object> object = new HashMap<>();
-        subject("%{a}.࿏.%{b}")
-                .dissect("⟳༒.࿏.༒⟲".getBytes(), object);
+        final byte[] bytes = "⟳༒.࿏.༒⟲".getBytes();
+        final int result = subject("%{a}.࿏.%{b}").dissect(bytes, object);
+        assertEquals(result, bytes.length);
         assertEquals("⟳༒", object.get("a"));
         assertEquals("༒⟲", object.get("b"));
     }
+
     @Test
     public void testSingleMultibyteCharacterString() throws Exception {
         final Map<String, Object> object = new HashMap<>();
-        subject("%{a}")
-                .dissect("子".getBytes(), object);
+        final byte[] bytes = "子".getBytes();
+        final int result = subject("%{a}").dissect(bytes, object);
+        assertEquals(result, bytes.length);
         assertEquals("子", object.get("a"));
     }
 

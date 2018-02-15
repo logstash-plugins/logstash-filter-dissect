@@ -185,7 +185,7 @@ public class JavaDissectorLibrary implements Library {
                     }
                     invokeMatchesMetric(ctx);
                 } else {
-                    LOGGER.warn("Dissector mapping, field found in event but it was empty",addLoggableEvent(ctx, rubyEvent,
+                    LOGGER.warn("Dissector mapping, field found in event but it was empty", addLoggableEvent(ctx, rubyEvent,
                             createHashInclField(ctx, dissectPair.key())));
                     invokeFailureTagsAndMetric(ctx, event);
                 }
