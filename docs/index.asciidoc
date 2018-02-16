@@ -240,8 +240,8 @@ For example
 filter {
   dissect {
     convert_datatype => {
-      cpu => "float"
-      code => "int"
+      "cpu" => "float"
+      "code" => "int"
     }
   }
 }
