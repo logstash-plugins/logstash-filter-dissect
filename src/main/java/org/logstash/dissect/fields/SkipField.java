@@ -8,12 +8,12 @@ import java.util.Map;
 
 public final class SkipField extends AbstractField {
 
-    private SkipField(final int id, final String name, String suffix, final Delimiter previous, final Delimiter next) {
+    private SkipField(final int id, final String name, final String suffix, final Delimiter previous, final Delimiter next) {
         super(id, name, suffix, SKIP_ORDINAL_LOWEST, previous, next);
 
     }
 
-    public static Field create(final int id, final String name, String suffix, final Delimiter previous, final Delimiter next) {
+    public static Field create(final int id, final String name, final String suffix, final Delimiter previous, final Delimiter next) {
         return new SkipField(id, name, suffix, previous, next);
     }
 

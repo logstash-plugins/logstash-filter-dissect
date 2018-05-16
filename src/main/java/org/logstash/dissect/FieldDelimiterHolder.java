@@ -6,9 +6,11 @@ final class FieldDelimiterHolder {
     private Delimiter previous;
     private Delimiter next;
 
-    public FieldDelimiterHolder(final int id, final String name) {
+    FieldDelimiterHolder(final int id, final String name, Delimiter previous) {
         this.id = id;
         this.name = name;
+        this.previous = previous;
+        this.next = null;
     }
 
     public int getId() {

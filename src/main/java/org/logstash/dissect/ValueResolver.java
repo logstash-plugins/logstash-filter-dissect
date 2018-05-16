@@ -16,7 +16,7 @@ public final class ValueResolver {
     public String getOtherByName(final String name, final int notFieldId) {
         int found = -1;
         for(int i = 0; i < fieldValues.length; i++) {
-            ValueRef ref = fieldValues[i];
+            final ValueRef ref = fieldValues[i];
             if (i != notFieldId && ref != null && name.contentEquals(ref.getFieldName())) {
                 found = i;
                 break;

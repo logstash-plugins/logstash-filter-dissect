@@ -59,4 +59,12 @@ public class StringSearchTest {
         Assert.assertEquals(3, p);
     }
 
+    @Test
+    public void testIndexOfMultiBytesSearch() throws Exception {
+        final byte[] source = "0123456-->-->-->ggg".getBytes();
+        final Delimiter delimiter = Delimiter.create("-->-->-->");
+        final int p = delimiter.indexOf(source, 3);
+        Assert.assertEquals(7, p);
+    }
+
 }

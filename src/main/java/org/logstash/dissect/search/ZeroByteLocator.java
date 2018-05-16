@@ -7,7 +7,7 @@ public class ZeroByteLocator implements DelimiterLocator {
     }
 
     @Override
-    public int indexOf(final byte[] needle, final byte[] haystack, final int offset) {
+    public final int indexOf(final byte[] needle, final byte[] haystack, final int offset) {
         return -1;
     }
 }

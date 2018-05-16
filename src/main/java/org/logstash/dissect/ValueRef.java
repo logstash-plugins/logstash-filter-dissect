@@ -3,7 +3,7 @@ package org.logstash.dissect;
 import java.nio.charset.StandardCharsets;
 
 final class ValueRef {
-    private String fieldName;
+    private final String fieldName;
     private int position;
     private int length;
 
