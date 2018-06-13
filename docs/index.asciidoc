@@ -34,7 +34,7 @@ The dissection is described using a set of `%{}` sections:
 %{a} - %{b} - %{c}
 ....
 
-A *field* is the text from `%` to `}` inclusive.
+A *field* is the text from `%{` to `}` inclusive.
 
 A *delimiter* is the text between a `}` and next `%{` characters.
 
