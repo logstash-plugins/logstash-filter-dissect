@@ -7,14 +7,26 @@ require 'rspec/core/rake_task'
 
 # Please read BUILD_INSTRUCTIONS.md
 
+def check_gemspec_version
+  root_dir = File.dirname(__FILE__)
+  dissect_version = File.read(File.expand_path(File.join(root_dir, "VERSION"))).strip
+  gemspec = File.read(File.expand_path(File.join(root_dir, "logstash-filter-dissect.gemspec")))
+  spec_version = eval(gemspec, TOPLEVEL_BINDING).version.to_s
+  dissect_version == spec_version
+end
+
 desc "Compile and vendor java into ruby"
 task :vendor => [:bundle_install] do
+  puts "-------------------> checking gemspec version matches VERSION file"
+  exit(1) unless check_gemspec_version
   exit(1) unless system './gradlew check vendor'
   puts "-------------------> vendored dissect jar via rake"
 end
 
 desc "Compile and vendor java into ruby for travis, its done bundle install already"
 task :travis_vendor => [:write_gradle_properties] do
+  puts "-------------------> checking gemspec version matches VERSION file"
+  exit(1) unless check_gemspec_version
   exit(1) unless system './gradlew check vendor'
   puts "-------------------> vendored dissect jar via rake"
 end
