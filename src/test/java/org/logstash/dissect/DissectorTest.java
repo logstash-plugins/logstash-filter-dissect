@@ -51,54 +51,43 @@ public class DissectorTest {
     public void testBasicArgs() throws Exception {
         final Map<String, Object> object = new HashMap<>();
         final String source = "foo bar   baz";
-        final int result = subject("%{a} %{b->} %{c}").dissect(source.getBytes(), object);
+        final DissectResult result = subject("%{a} %{b->} %{c}").dissect(source.getBytes(), object);
         assertThat(object.size(), is(equalTo(3)));
         assertEquals("foo", object.get("a"));
         assertEquals("bar", object.get("b"));
         assertEquals("baz", object.get("c"));
-        assertEquals(source.length(), result);
+        assertTrue(result.matched());
     }
 
     @Test
     public void testNullSource() throws Exception {
         final Map<String, Object> object = new HashMap<>();
-        final int result = subject("%{a}%{b} %{c}").dissect(null, object);
-        assertEquals(-1, result);
+        final DissectResult result = subject("%{a}%{b} %{c}").dissect(null, object);
+        assertTrue(result.notMatched());
     }
 
     @Test
     public void testMissingDelimBegin() throws Exception {
         final Map<String, Object> object = new HashMap<>();
-        subject("%{a}%{b} %{c}")
+        final DissectResult result = subject("%{a}%{b} %{c}")
                 .dissect("foo bar   baz".getBytes(), object);
-        assertEquals(3, object.size());
-        assertEquals("", object.get("a"));
-        assertEquals("foo", object.get("b"));
-        assertEquals("bar   baz", object.get("c"));
+        assertTrue(result.notMatched());
     }
 
     @Test
     public void testMissingDelimMiddle() throws Exception {
         final Map<String, Object> object = new HashMap<>();
-        subject("%{a} %{b}%{c} %{d}")
+        DissectResult result = subject("%{a} %{b}%{c} %{d}")
                 .dissect("foo bar baz".getBytes(), object);
-        assertEquals(4, object.size());
-        assertEquals("foo", object.get("a"));
-        assertEquals("", object.get("b"));
-        assertEquals("bar", object.get("c"));
-        assertEquals("baz", object.get("d"));
+        assertTrue(result.notMatched());
     }
 
     @Test
     public void testMissingDelimEnd() throws Exception {
         final Map<String, Object> object = new HashMap<>();
-        subject("%{a} %{b} %{c}%{d}")
+        DissectResult result = subject("%{a} %{b} %{c}%{d}")
                 .dissect("foo bar baz quux".getBytes(), object);
-        assertEquals(4, object.size());
-        assertEquals("foo", object.get("a"));
-        assertEquals("bar", object.get("b"));
-        assertEquals("", object.get("c"));
-        assertEquals("baz quux", object.get("d"));
+        assertTrue(result.notMatched());
     }
 
     @Test
@@ -344,6 +333,14 @@ public class DissectorTest {
     }
 
     @Test
+    public void testInvalidAppendField() {
+        final String mpp = "%{+/2}";
+        exception.expect(InvalidFieldException.class);
+        exception.expectMessage("Field cannot be a prefix and a suffix without a name section");
+        subject(mpp);
+    }
+
+    @Test
     public void testInvalidAppendIndirectField() {
         final String mpp = "%{+&a_field}";
         exception.expect(InvalidFieldException.class);
@@ -373,7 +370,7 @@ public class DissectorTest {
     @Test
     public void testLeadingDelimiters() throws Exception {
         final Map<String, Object> object = new HashMap<>();
-        subject("-%{a}")
+        subject("%{?->}-%{a}")
                 .dissect("-----666".getBytes(), object);
         assertEquals("666", object.get("a"));
     }
@@ -396,8 +393,8 @@ public class DissectorTest {
     public void testMultibyteCharacterStrings() throws Exception {
         final Map<String, Object> object = new HashMap<>();
         final byte[] bytes = "⟳༒.࿏.༒⟲".getBytes();
-        final int result = subject("%{a}.࿏.%{b}").dissect(bytes, object);
-        assertEquals(result, bytes.length);
+        final DissectResult result = subject("%{a}.࿏.%{b}").dissect(bytes, object);
+        assertTrue(result.matched());
         assertEquals("⟳༒", object.get("a"));
         assertEquals("༒⟲", object.get("b"));
     }
@@ -406,8 +403,8 @@ public class DissectorTest {
     public void testSingleMultibyteCharacterString() throws Exception {
         final Map<String, Object> object = new HashMap<>();
         final byte[] bytes = "子".getBytes();
-        final int result = subject("%{a}").dissect(bytes, object);
-        assertEquals(result, bytes.length);
+        final DissectResult result = subject("%{a}").dissect(bytes, object);
+        assertTrue(result.matched());
         assertEquals("子", object.get("a"));
     }
 
@@ -422,6 +419,30 @@ public class DissectorTest {
         assertEquals("bbb", object.get("b"));
     }
 
+    @Test
+    public void testStartingDelimInMiddle() throws Exception {
+        final Map<String, Object> object = new HashMap<>();
+        DissectResult result = subject("MACHINE[%{a}] %{b}")
+                .dissect("1234567890 MACHINE[foo] bar".getBytes(), object);
+        assertTrue(result.notMatched());
+    }
+
+    @Test
+    public void testNoMatchAtAll() throws Exception {
+        final Map<String, Object> object = new HashMap<>();
+        subject("%{a} %{b} %{c}")
+                .dissect("foo:bar:baz".getBytes(), object);
+        assertEquals(true, object.isEmpty());
+    }
+
+    @Test
+    public void testTrailingDelimiter() throws Exception {
+        final Map<String, Object> object = new HashMap<>();
+        subject("/var/%{key1}/log/%{key2}.log")
+                .dissect("/var/foo/log/bar.log".getBytes(), object);
+        assertEquals("foo", object.get("key1"));
+        assertEquals("bar", object.get("key2"));
+    }
 
     @Test
     @Ignore("Skipping long running test used only when profiling")

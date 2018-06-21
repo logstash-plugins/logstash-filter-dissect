@@ -9,11 +9,11 @@ import java.util.regex.Matcher;
 
 public final class AppendField extends AbstractField {
 
-    private AppendField(final int id, final String name, String suffix, final int ord, final Delimiter previous, final Delimiter next) {
+    private AppendField(final int id, final String name, final String suffix, final int ord, final Delimiter previous, final Delimiter next) {
         super(id, name, suffix, ord, previous, next);
     }
 
-    public static Field create(final int id, final String name, String suffix, final Delimiter previous, final Delimiter next) {
+    public static Field create(final int id, final String name, final String suffix, final Delimiter previous, final Delimiter next) {
         final Matcher m = ORDINAL_REGEX.matcher(suffix);
         if (m.find()) {
             return new AppendField(id, name, suffix, APPEND_ORDINAL_BASE + Integer.parseInt(m.group()), previous, next);

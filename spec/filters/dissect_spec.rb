@@ -328,4 +328,25 @@ describe LogStash::Filters::Dissect do
       end
     end
   end
+
+  describe "Compatibility suite" do
+    tests = LogStash::Json.load(File.read(File.join(File.dirname(__FILE__), "/../fixtures/dissect_tests.json")))
+    tests.each do |test|
+      describe test["name"] do
+        let(:options) { { "mapping" => { "message" => test["tok"] } } }
+        subject { described_class.new(options) }
+        let(:event) { LogStash::Event.new({ "message" => test["msg"] }) }
+        before(:each) do
+          subject.register
+          subject.filter(event)
+        end
+
+        it "should dissect properly" do
+          test["expected"].each do |k, v|
+            expect(event.get(k)).to eq(v)
+          end
+        end
+      end
+    end
+end
 end

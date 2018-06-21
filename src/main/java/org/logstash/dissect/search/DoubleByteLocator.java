@@ -7,7 +7,7 @@ public class DoubleByteLocator implements DelimiterLocator {
     }
 
     @Override
-    public int indexOf(final byte[] needle, final byte[] haystack, final int offset) {
+    public final int indexOf(final byte[] needle, final byte[] haystack, final int offset) {
         for (int n = offset; n < haystack.length - 1; n++) {
             if (haystack[n] == needle[0] && haystack[n + 1] == needle[1]) {
                 return n;

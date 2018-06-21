@@ -42,36 +42,36 @@ public abstract class AbstractField implements Field, Comparable<Field> {
     }
 
     @Override
-    public int compareTo(Field o) {
-        return Integer.compare(id, o.hashCode());
+    public final int compareTo(final Field field) {
+        return Integer.compare(id, field.hashCode());
     }
 
     @Override
-    public int hashCode() {
+    public final int hashCode() {
         return id;
     }
 
     @Override
-    public boolean equals(Object obj) {
+    public final boolean equals(final Object obj) {
         return obj instanceof Field && hashCode() == obj.hashCode();
     }
 
     @Override
-    public String name() {
+    public final String name() {
         return name;
     }
 
     @Override
-    public int id() {
+    public final int id() {
         return id;
     }
 
     @Override
-    public int ordinal() {
+    public final int ordinal() {
         return ordinal;
     }
 
-    String joinString() {
+    final String joinString() {
         if (previous == null || previous.size() == 0) {
             return " ";
         }
@@ -79,16 +79,16 @@ public abstract class AbstractField implements Field, Comparable<Field> {
     }
 
     @Override
-    public Delimiter nextDelimiter() {
+    public final Delimiter nextDelimiter() {
         return next;
     }
 
     @Override
-    public Delimiter previousDelimiter() {
+    public final Delimiter previousDelimiter() {
         return previous;
     }
 
-    String buildToString(final String className) {
+    final String buildToString(final String className) {
         return className + '{' +
                 "name=" + this.name() +
                 ", ordinal=" + this.ordinal() +

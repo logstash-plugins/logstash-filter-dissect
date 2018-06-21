@@ -13,16 +13,19 @@ import java.util.regex.Pattern;
 
 public class Dissector {
     private static final Pattern DELIMITER_FIELD_PATTERN = Pattern.compile("(.*?)%\\{([^}]*?)}", Pattern.DOTALL);
+    private static final Pattern FINAL_DELIMITER_PATTERN = Pattern.compile("[^}]+$");
     private final List<Field> fields;
     // skip fields are not savable, so will be excluded from the saveableFields list
     // saveable fields are field + values that need to be set on the Event or HashMap
     private final List<Field> saveableFields;
-    private int initialOffset;
+    private int offsetOfFirstField;
+    private String mapping;
 
     public  Dissector() {
-        initialOffset = 0;
+        offsetOfFirstField = 0;
         fields = new ArrayList<>(10);
         saveableFields = new ArrayList<>(10);
+        mapping = "";
     }
 
     public static Dissector create(final String mapping) {
@@ -31,7 +34,12 @@ public class Dissector {
         return dissector;
     }
 
+    public final String getMapping() {
+        return mapping;
+    }
+
     private void handleMapping(final String mapping) {
+        this.mapping = mapping;
         if (mapping.isEmpty()) {
             throw new IllegalArgumentException("The mapping string cannot be empty");
         }
@@ -52,13 +60,11 @@ public class Dissector {
             // any match has a delimiter in the first group
             // and a field in the second group
             final Delimiter delimiter = Delimiter.create(matcher.group(1));
-            final FieldDelimiterHolder temp = new FieldDelimiterHolder(fieldIndex, matcher.group(2));
             // for this field point its 'previous' delimiter to this one
-            temp.setPrevious(delimiter);
+            final FieldDelimiterHolder temp = new FieldDelimiterHolder(fieldIndex, matcher.group(2), delimiter);
             if (list.isEmpty()) {
                 if (delimiter.size() > 0) {
-                    initialOffset = delimiter.size();
-                    delimiter.setGreedy(true);
+                    offsetOfFirstField = delimiter.size();
                 }
             } else {
                 // for the previous field point its 'next' delimiter to this one
@@ -70,6 +76,13 @@ public class Dissector {
             }
             list.add(fieldIndex, temp);
             fieldIndex++;
+        }
+        final Matcher endsWithDelimiterMatcher = FINAL_DELIMITER_PATTERN.matcher(mapping);
+        if (endsWithDelimiterMatcher.find()) {
+            final Delimiter finalDelimiter = Delimiter.create(endsWithDelimiterMatcher.group(0));
+            final FieldDelimiterHolder holder = new FieldDelimiterHolder(fieldIndex, "?auto_added_skip", finalDelimiter);
+            list.add(fieldIndex, holder);
+            list.get(fieldIndex - 1).setNext(finalDelimiter);
         }
         // this is not a list of fields yet, this is a list of what was found in the dissect mapping
         return list;
@@ -90,46 +103,47 @@ public class Dissector {
         saveableFields.sort(new FieldComparator());
     }
 
-    public final int dissect(final byte[] source, final Map<String, Object> keyValueMap) {
-        final int pos;
+    public final DissectResult dissect(final byte[] source, final Map<String, Object> keyValueMap) {
+        final ValueRef[] valueRefs = createValueRefArray();
+        final DissectResult result = new DissectResult();
         if (fields.isEmpty() || source == null || source.length == 0) {
-            pos = -1;
+            result.bail();
         } else {
             // keyValueMap is a Map we get given - its is what we are updating with the keys and found values
-            final ValueRef[] valueRefs = createValueRefArray();
             // here we take the bytes (from a Ruby String), use the fields list to find each delimiter and
             // record the indexes where we find each fields value in the valueRefs
             // we use the integer id of the Field as the index to store the ValueRef in.
             // note: we have not extracted any strings from the source bytes yet.
-            pos = dissectValues(source, valueRefs);
-            // dissectValues returns the position the last delimiter was found
+            dissectValues(source, valueRefs, result);
             final ValueResolver resolver = new ValueResolver(source, valueRefs);
-            // iterate through the sorted saveable fields only
-            for (final Field field : saveableFields) {
-                // allow the field to append its key and
-                // use the resolver to extract the value from the source bytes
-                field.append(keyValueMap, resolver);
+            if (result.matched()) {
+                // fields were found
+                // fill the keyValueMap, iterate through the sorted saveable fields only
+                for (final Field field : saveableFields) {
+                    // allow the field to append its key and
+                    // use the resolver to extract the value from the source bytes
+                    field.append(keyValueMap, resolver);
+                }
             }
-
         }
-        return pos;
+        return result;
     }
 
-    public final int dissect(final byte[] source, final Event event) {
-        final int pos;
+    public final DissectResult dissect(final byte[] source, final Event event) {
+        final ValueRef[] valueRefs = createValueRefArray();
+        final DissectResult result = new DissectResult();
         if (fields.isEmpty() || source.length == 0) {
-            pos = -1;
+            result.bail();
         } else {
-            final ValueRef[] valueRefs = createValueRefArray();
-
-            pos = dissectValues(source, valueRefs);
+            dissectValues(source, valueRefs, result);
             final ValueResolver resolver = new ValueResolver(source, valueRefs);
-
-            for (final Field field : saveableFields) {
-                field.append(event, resolver);
+            if (result.matched()) {
+                for (final Field field : saveableFields) {
+                    field.append(event, resolver);
+                }
             }
         }
-        return pos;
+        return result;
     }
 
     private ValueRef[] createValueRefArray() {
@@ -140,9 +154,8 @@ public class Dissector {
         return array;
     }
 
-    private int dissectValues(final byte[] source, final ValueRef[] fieldValueRefs) {
-        final Dissector.Position position = new Dissector.Position(source, initialOffset);
-
+    private void dissectValues(final byte[] source, final ValueRef[] fieldValueRefs, final DissectResult result) {
+        final Dissector.Position position = new Dissector.Position(source, offsetOfFirstField);
         final int numFields = fields.size();
         final int lastFieldIndex = numFields - 1;
         for (int idx = 0; idx < lastFieldIndex; idx++) {
@@ -151,28 +164,37 @@ public class Dissector {
             // each delimiter is given a strategy that uses the indexOf method
             // to search in the source bytes for itself starting from
             // where we think next field might begin (left)
-            position.moveBeyondDelimiter(field.previousDelimiter());
-            position.moveNext(field.nextDelimiter());
+            position.moveBeyondDelimiter(field.previousDelimiter(), result);
+            if (result.notMatched()) {
+                break;
+            }
+            position.moveNext(field.nextDelimiter(), result);
+            if (result.notMatched()) {
+                break;
+            }
             fieldValueRefs[field.id()].update(position.start, position.length);
         }
-        final Field lastField = fields.get(lastFieldIndex);
-        fieldValueRefs[lastField.id()].clear();
-        position.moveBeyondDelimiter(lastField.previousDelimiter());
-        position.repositionToEnd();
-        fieldValueRefs[lastField.id()].update(position.start, position.length);
-        return position.pos;
+        if (result.matched()) {
+            final Field lastField = fields.get(lastFieldIndex);
+            fieldValueRefs[lastField.id()].clear();
+            position.moveBeyondDelimiter(lastField.previousDelimiter(), result);
+            position.repositionToEnd();
+            fieldValueRefs[lastField.id()].update(position.start, position.length);
+        }
     }
 
     private static final class Position {
         int pos;
+        final int firstFieldOffset;
         int left;
         final byte[] source;
         int start;
         int length;
 
-        Position(final byte[] sourceBytes, final int initial) {
+        Position(final byte[] sourceBytes, final int offsetFirstField) {
             source = sourceBytes;
-            left = initial;
+            firstFieldOffset = offsetFirstField;
+            left = 0;
             pos = 0;
             start = 0;
             length = 0;
@@ -191,10 +213,13 @@ public class Dissector {
             setLength();
         }
 
-        void moveNext(final Delimiter next) {
+        void moveNext(final Delimiter next, final DissectResult result) {
             length = 0;
             pos = next.indexOf(source, left);
-            if (pos > 0) {
+            if (pos == -1) {
+                // the next delimiter was never found at all, bail out
+                result.bail();
+            } else if (pos > 0) {
                 // pos is now at the next delimiter, found the end of the field
                 setLength();
                 // set left to be the end of the delimiter & start index of the next field
@@ -202,23 +227,54 @@ public class Dissector {
             }
         }
 
-        void moveBeyondDelimiter(final Delimiter prev) {
-            if (prev == null || !prev.isGreedy()) {
-                // no delimiter or not greedy (did not use '->')
+        void moveBeyondDelimiter(final Delimiter prev, final DissectResult result) {
+            // we use this method to move past one or more consecutive delimiters if greedy
+            if (prev == null) {
                 // we are at the start
                 setStart();
-            } else {
-                // greedy consume,
+            } else if (prev.isGreedy()) {
+                // greedy consume, used '->' suffix
+                int foundCount = 0;
                 while (true) {
                     pos = prev.indexOf(source, left);
-                    if (pos != left) {
+                    if (pos == left) {
+                        // we found another delimiter move to the end of the delimiter
+                        foundCount++;
+                        left = pos + prev.size();
+                    } else if (pos == -1) {
+                        // the previous delimiter was not found at all in the rest of the value
+                        // this is OK start from left
+                        if (foundCount == 0) {
+                            // we never found the delimiter at all
+                            result.bail();
+                        }
+                        setStart();
+                        break;
+                    } else {
                         // we found the start of value
                         setStart();
                         break;
                     }
-                    // we found a delimiter move to the end of the delimiter
-                    left = pos + prev.size();
                 }
+            } else {
+                // not greedy
+                // need to handle the starting delimiter case
+                if (left == 0 && firstFieldOffset > 0) {
+                    // there is a first delimiter and we have not yet found it and skipped over it.
+                    pos = prev.indexOf(source, left);
+                    // first delimiter must appear just before the start of the value.
+                    if (pos == 0) {
+                        left = pos + prev.size();
+                    } else {
+                        // if -1, no first delimiter was found at all or
+                        // > 0, the delimiter was found deeper in the value
+                        // either way we bail by setting start to the end
+                        result.bail();
+                    }
+                }
+                // we move the start to be where the left is now.
+                // left is at the start of the field (after this delimiter)
+                setStart();
             }
         }
     }

@@ -1,3 +1,10 @@
+## 1.2.0
+  - Fix Trailing Delimiters requires a false field. A skip field is
+  automatically added when a final delimiter is detected in the dissect pattern.
+  This requires that strict delimiter finding is enforced  - meaning a "no match"
+  results if every delimiter is not found in exactly the declared order
+  [Issue #22](https://github.com/logstash-plugins/logstash-filter-dissect/issues/22)
+
 ## 1.1.4
   - Replace v1.1.3 as it packaged the v1.1.1 jar and therefore does not have the fixes below
   - Yank v1.1.3 from rubygems.org

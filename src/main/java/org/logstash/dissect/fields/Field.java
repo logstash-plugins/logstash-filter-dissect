@@ -13,17 +13,24 @@ public interface Field {
     int NORMAL_ORDINAL_LOWER = 1;
     int APPEND_ORDINAL_BASE = 100;
     int INDIRECT_ORDINAL_HIGHER = 1000;
-    int MISSING_ORDINAL_HIGHEST = 100000;
+    // int MISSING_ORDINAL_HIGHEST = 100000;
     Pattern SUFFIX_REGEX = Pattern.compile("(.+?)(/\\d{1,2}|->|/\\d{1,2}->|->/\\d{1,2})?$");
+    Pattern SUFFIX_ONLY_REGEX = Pattern.compile("^(/\\d{1,2}|->|/\\d{1,2}->|->/\\d{1,2})?$");
     Pattern ORDINAL_REGEX = Pattern.compile("\\d+");
     String GREEDY_SUFFIX = "->";
 
     static String[] extractNameSuffix(final String s) {
         final String[] result = {s, ""};
-        Matcher m = SUFFIX_REGEX.matcher(s);
-        if (m.matches()) {
-            result[0] = m.group(1);
-            result[1] = m.group(2) == null ? "" : m.group(2);
+        final Matcher soMatcher = SUFFIX_ONLY_REGEX.matcher(s);
+        if (soMatcher.matches()) {
+            result[0] = "";
+            result[1] = s;
+            return result;
+        }
+        final Matcher matcher = SUFFIX_REGEX.matcher(s);
+        if (matcher.matches()) {
+            result[0] = matcher.group(1);
+            result[1] = matcher.group(2) == null ? "" : matcher.group(2);
         }
         return result;
     }

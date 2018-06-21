@@ -177,17 +177,17 @@ public class JavaDissectorLibrary implements Library {
                     continue;
                 }
                 final byte[] bytes = src.getBytes();
-                final int result = dissectPair.dissector().dissect(bytes, event);
-                // a good result will be the end of the source string
-                if (result == bytes.length) {
+                final DissectResult result = dissectPair.dissector().dissect(bytes, event);
+                if (result.matched()) {
                     if (runMatched) {
                         invokeFilterMatched(ctx, rubyEvent);
                     }
                     invokeMatchesMetric(ctx);
                 } else {
-                    LOGGER.warn("Dissector mapping, field found in event but it was empty", addLoggableEvent(ctx, rubyEvent,
-                            createHashInclField(ctx, dissectPair.key())));
                     invokeFailureTagsAndMetric(ctx, event);
+                    final RubyHash loggableMap = createHashInclField(ctx, dissectPair.key());
+                    loggableMap.put("pattern", dissectPair.dissector().getMapping());
+                    LOGGER.warn("Dissector mapping, pattern not found", addLoggableEvent(ctx, rubyEvent, loggableMap));
                 }
             }
         }
@@ -199,16 +199,19 @@ public class JavaDissectorLibrary implements Library {
                         convertPair.converter().convert(event, convertPair.src());
                     } catch (final NumberFormatException e) {
                         final Object val = event.getField(convertPair.src());
+                        final String msg;
                         if (val == null) {
                             event.tag(String.format("_dataconversionnullvalue_%s_%s", convertPair.src(), convertPair.type()));
+                            msg = String.format(
+                                    "Dissector datatype conversion, field does not exist or value is nil, field: %s",
+                                    convertPair.src());
                         } else {
                             event.tag(String.format("_dataconversionuncoercible_%s_%s", convertPair.src(), convertPair.type()));
+                            msg = String.format(
+                                    "Dissector datatype conversion, value cannot be coerced, field: %s, value: %s",
+                                    convertPair.src(),
+                                    String.valueOf(val));
                         }
-                        final String msg = String.format(
-                                "Dissector datatype conversion, value cannot be coerced, field: %s, value: %s",
-                                convertPair.src(),
-                                String.valueOf(val)
-                        );
                         LOGGER.warn(msg);
                     }
                 }

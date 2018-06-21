@@ -16,6 +16,7 @@ public final class Delimiter {
         this.delimiter = delimiter;
         this.needle = bytes;
         this.strategy = strategy;
+        greedy = false;
     }
 
     public static Delimiter create(final String delim) {
@@ -56,7 +57,7 @@ public final class Delimiter {
         return greedy;
     }
 
-    public void setGreedy(boolean greedy) {
+    public void setGreedy(final boolean greedy) {
         this.greedy = greedy;
     }
 }
