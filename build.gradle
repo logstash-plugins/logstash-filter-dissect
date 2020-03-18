@@ -11,7 +11,7 @@ buildscript {
 }
 
 plugins {
-    id "me.champeau.gradle.jmh" version "0.3.1"
+    id "me.champeau.gradle.jmh" version "0.5.0"
 }
 repositories {
     mavenLocal()
@@ -96,12 +96,6 @@ dependencies {
     testCompile 'junit:junit:4.12'
     testCompile 'org.assertj:assertj-core:3.8.0'
     jmhCompile fileTree(dir: logstashCoreGemPath, include: '**/*.jar')
-}
-
-// See http://www.gradle.org/docs/current/userguide/gradle_wrapper.html
-task wrapper(type: Wrapper) {
-    description = 'Install Gradle wrapper'
-    gradleVersion = '2.8'
 }
 
 task generateGemJarRequiresFile {
