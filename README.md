@@ -31,7 +31,7 @@ Please read BUILD_INSTRUCTIONS.md
 
 # Logstash Plugin
 
-[![Travis Build Status](https://travis-ci.org/logstash-plugins/logstash-filter-dissect.svg)](https://travis-ci.org/logstash-plugins/logstash-filter-dissect)
+[![Travis Build Status](https://travis-ci.com/logstash-plugins/logstash-filter-dissect.svg)](https://travis-ci.com/logstash-plugins/logstash-filter-dissect)
 
 This is a plugin for [Logstash](https://github.com/elastic/logstash).
 
