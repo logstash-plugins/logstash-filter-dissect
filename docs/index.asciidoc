@@ -65,6 +65,9 @@ Examples:
 
 `%{&ccc}` - the key is `ccc` 
 
+NOTE: Using the `.` (dot) as `key` will generate fields with `.` in the field name. If
+you want to get nested fields, use the brackets notation such as `%{[fieldname][subfieldname]}`.
+
 ===== Sample configuration
 
 The config might look like this:
