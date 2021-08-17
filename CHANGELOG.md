@@ -1,3 +1,6 @@
+## 1.2.1
+ - [DOC] Added note to clarify notation for dot or nested fields [#76](https://github.com/logstash-plugins/logstash-filter-dissect/pull/76)
+
 ## 1.2.0
   - Fix Trailing Delimiters requires a false field. A skip field is
   automatically added when a final delimiter is detected in the dissect pattern.
