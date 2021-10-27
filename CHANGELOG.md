@@ -1,3 +1,6 @@
+## Unreleased
+  - Fix: update to Gradle 7 [#78](https://github.com/logstash-plugins/logstash-filter-dissect/pull/78)
+
 ## 1.2.1
  - [DOC] Added note to clarify notation for dot or nested fields [#76](https://github.com/logstash-plugins/logstash-filter-dissect/pull/76)
 
