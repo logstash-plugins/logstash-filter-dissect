@@ -73,7 +73,7 @@ end
 def delete_create_gradle_properties
   root_dir = File.dirname(__FILE__)
   gradle_properties_file = "#{root_dir}/gradle.properties"
-  lsc_path = `bundle show logstash-core`.split(/\n/).first
+  lsc_path = `bundle show logstash-core`.split(/\n/).last
 
   FileUtils.rm_f(gradle_properties_file)
   File.open(gradle_properties_file, "w") do |f|
