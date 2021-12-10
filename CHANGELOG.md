@@ -1,4 +1,5 @@
-## Unreleased
+## 1.2.2
+  - Update log4j dependencies [#80](https://github.com/logstash-plugins/logstash-filter-dissect/pull/80)
   - Fix: update to Gradle 7 [#78](https://github.com/logstash-plugins/logstash-filter-dissect/pull/78)
 
 ## 1.2.1
