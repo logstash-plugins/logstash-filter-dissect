@@ -87,8 +87,8 @@ idea {
 // the gradle.properties file is built by the Rake task bundle_install
 // See BUILD_INSTRUCTIONS.md
 dependencies {
-    provided group: "org.apache.logging.log4j", name: "log4j-api", version: "2.6.2"
-    provided group: "org.apache.logging.log4j", name: "log4j-core", version: "2.6.2"
+    provided group: "org.apache.logging.log4j", name: "log4j-api", version: "2.15.0"
+    provided group: "org.apache.logging.log4j", name: "log4j-core", version: "2.15.0"
     provided 'org.jruby:jruby-core:9.1.12.0'
     provided fileTree(dir: logstashCoreGemPath, include: '**/*.jar')
     testImplementation 'junit:junit:4.12'
