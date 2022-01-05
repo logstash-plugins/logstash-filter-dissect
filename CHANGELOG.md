@@ -1,4 +1,7 @@
 ## 1.2.3
+  - Update log4j dependencies to 2.17.1 [#83](https://github.com/logstash-plugins/logstash-filter-dissect/pull/83)
+
+## 1.2.3
   - Update log4j dependencies to 2.17.0
 
 ## 1.2.2
