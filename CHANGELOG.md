@@ -1,3 +1,6 @@
+## 1.2.4
+  - Update log4j dependencies to 2.17.1
+
 ## 1.2.3
   - Update log4j dependencies to 2.17.0
 
