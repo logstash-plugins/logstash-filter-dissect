@@ -1,3 +1,6 @@
+## 1.2.5
+  - fix bad padding `->` suffix with delimiter
+
 ## 1.2.4
   - Update log4j dependencies to 2.17.1
 

@@ -234,20 +234,12 @@ public class Dissector {
                 setStart();
             } else if (prev.isGreedy()) {
                 // greedy consume, used '->' suffix
-                int foundCount = 0;
                 while (true) {
                     pos = prev.indexOf(source, left);
                     if (pos == left) {
                         // we found another delimiter move to the end of the delimiter
-                        foundCount++;
                         left = pos + prev.size();
                     } else if (pos == -1) {
-                        // the previous delimiter was not found at all in the rest of the value
-                        // this is OK start from left
-                        if (foundCount == 0) {
-                            // we never found the delimiter at all
-                            result.bail();
-                        }
                         setStart();
                         break;
                     } else {
