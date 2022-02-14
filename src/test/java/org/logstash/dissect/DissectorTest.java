@@ -461,4 +461,25 @@ public class DissectorTest {
         assertEquals("bar", object.get("b"));
         assertEquals("baz", object.get("c"));
     }
+
+    @Test
+    public void testPaddingWithTextEnd() throws Exception {
+        final Map<String, Object> object = new HashMap<>();
+        final String source = "XXX YYY ZZZ";
+        final DissectResult result = subject("XXX %{y->} ZZZ").dissect(source.getBytes(), object);
+        assertThat(object.size(), is(equalTo(1)));
+        assertEquals("YYY", object.get("y"));
+        assertTrue(result.matched());
+    }
+
+    @Test
+    public void testPaddingFollowingFieldEnd() throws Exception {
+        final Map<String, Object> object = new HashMap<>();
+        final String source = "XXX YYY ZZZ";
+        final DissectResult result = subject("XXX %{y->} %{z}").dissect(source.getBytes(), object);
+        assertThat(object.size(), is(equalTo(2)));
+        assertEquals("YYY", object.get("y"));
+        assertEquals("ZZZ", object.get("z"));
+        assertTrue(result.matched());
+    }
 }
