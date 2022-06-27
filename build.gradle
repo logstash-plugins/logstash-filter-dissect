@@ -4,7 +4,6 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING
 
 buildscript {
     repositories {
-        mavenLocal()
         mavenCentral()
     }
 }
@@ -13,7 +12,6 @@ plugins {
     id "me.champeau.jmh" version "0.6.6"
 }
 repositories {
-    mavenLocal()
     mavenCentral()
 }
 
