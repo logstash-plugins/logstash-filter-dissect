@@ -16,7 +16,7 @@ describe LogStash::Filters::Dissect do
     CONFIG
     end
 
-    sample("message" => "[25/05/16 09:10:38:425 BST] 00000001 SystemOut     O java.lang:type=MemoryPool,name=class storage") do
+    sample({"message" => "[25/05/16 09:10:38:425 BST] 00000001 SystemOut     O java.lang:type=MemoryPool,name=class storage"}) do
       expect(subject.get("occurred_at")).to eq("25/05/16 09:10:38:425 BST")
       expect(subject.get("code")).to eq("00000001")
       expect(subject.get("service")).to eq("SystemOut")
@@ -38,7 +38,7 @@ describe LogStash::Filters::Dissect do
     CONFIG
     end
 
-    sample("message" => '[25/05/16 09:10:38:425 BST] 00000001 SystemOut values: "f1","","f3"') do
+    sample({"message" => '[25/05/16 09:10:38:425 BST] 00000001 SystemOut values: "f1","","f3"'}) do
       expect(subject.get("occurred_at")).to eq("25/05/16 09:10:38:425 BST")
       expect(subject.get("code")).to eq("00000001")
       expect(subject.get("service")).to eq("SystemOut")
@@ -66,7 +66,7 @@ describe LogStash::Filters::Dissect do
     CONFIG
     end
 
-    sample("message" => "[25/05/16 09:10:38:425 BST] 00000001 SystemOut cpu=95.43% java.lang:type=MemoryPool,name=class storage") do
+    sample({"message" => "[25/05/16 09:10:38:425 BST] 00000001 SystemOut cpu=95.43% java.lang:type=MemoryPool,name=class storage"}) do
       expect(subject.get("occurred_at")).to eq("25/05/16 09:10:38:425 BST")
       expect(subject.get("code")).to eq(1)
       expect(subject.get("service")).to eq("SystemOut")
@@ -91,7 +91,7 @@ describe LogStash::Filters::Dissect do
     CONFIG
     end
 
-    sample("message" => "[25/05/16 09:10:38:425 BST]྿྿྿00000001྿SystemOut྿྿྿྿cpu=95.43%྿྿java.lang:type=MemoryPool,name=class storage") do
+    sample({"message" => "[25/05/16 09:10:38:425 BST]྿྿྿00000001྿SystemOut྿྿྿྿cpu=95.43%྿྿java.lang:type=MemoryPool,name=class storage"}) do
       expect(subject.get("occurred_at")).to eq("25/05/16 09:10:38:425 BST")
       expect(subject.get("code")).to eq(1)
       expect(subject.get("service")).to eq("SystemOut")
@@ -167,7 +167,7 @@ describe LogStash::Filters::Dissect do
       }
     CONFIG
     end
-    sample("big_number" => "43947404257507186289") do
+    sample({"big_number" => "43947404257507186289"}) do
       expect(subject.get("big_number")).to eq(43947404257507186289)
     end
   end
@@ -183,7 +183,7 @@ describe LogStash::Filters::Dissect do
       }
     CONFIG
     end
-    sample("big_number" => "43947404257507186289.345324") do
+    sample({"big_number" => "43947404257507186289.345324"}) do
       expect(subject.get("big_number")).to eq(BigDecimal.new("43947404257507186289.345324"))
     end
   end
@@ -201,7 +201,7 @@ describe LogStash::Filters::Dissect do
       CONFIG
     end
 
-    sample("message" => "Mar 16 00:01:25 evita skip-this postfix/smtpd[1713]: connect from camomile.cloud9.net[168.100.1.3]") do
+    sample({"message" => "Mar 16 00:01:25 evita skip-this postfix/smtpd[1713]: connect from camomile.cloud9.net[168.100.1.3]"}) do
       expect(subject.get("tags")).to be_nil
       expect(subject.get("logsource")).to eq("evita")
       expect(subject.get("timestamp")).to eq("Mar 16 00:01:25")
