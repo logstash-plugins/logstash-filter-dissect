@@ -61,12 +61,14 @@ task :custom_ls_check, :ls_dir do |task, args|
 end
 
 def custom_ls_path_shell_script(path)
+  # Use same JRuby that launched this Rake
+  current_ruby_path = RbConfig::CONFIG['prefix']
   <<TXT
 export LOGSTASH_PATH='#{path}'
 export LOGSTASH_SOURCE=1
-bundle install
-bundle exec rake travis_vendor
-bundle exec rspec spec
+#{current_ruby_path}/bin/jruby -S bundle install
+#{current_ruby_path}/bin/jruby -S bundle exec rake travis_vendor
+#{current_ruby_path}/bin/jruby -S bundle exec rspec spec
 TXT
 end
 
