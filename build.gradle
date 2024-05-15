@@ -31,39 +31,11 @@ description = """Dissect Filter, a Logstash plugin - the Java parts"""
 
 java {
   sourceCompatibility = JavaVersion.VERSION_1_8
+  withSourcesJar()
+  withJavadocJar()
 }
 
 compileJava.options.encoding = 'UTF-8'
-
-task sourcesJar(type: Jar, dependsOn: classes) {
-    from sourceSets.main.allSource
-    classifier 'sources'
-    archiveExtension = 'jar'
-}
-
-task javadocJar(type: Jar, dependsOn: javadoc) {
-    from javadoc.destinationDir
-    classifier 'javadoc'
-    archiveExtension = 'jar'
-}
-
-configurations.create('sources')
-configurations.create('javadoc')
-configurations.archives {
-    extendsFrom configurations.sources
-    extendsFrom configurations.javadoc
-}
-
-artifacts {
-    sources(sourcesJar) {
-        // Weird Gradle quirk where type will be used for the extension, but only for sources
-        type 'jar'
-    }
-
-    javadoc(javadocJar) {
-        type 'javadoc'
-    }
-}
 
 configurations {
     provided
