@@ -9,7 +9,7 @@ buildscript {
 }
 
 plugins {
-    id "me.champeau.jmh" version "0.6.6"
+    id "me.champeau.jmh" version "0.7.2"
 }
 repositories {
     mavenCentral()
@@ -29,39 +29,13 @@ group = 'org.logstash.dissect'
 version "${new File("VERSION").text.trim()}"
 description = """Dissect Filter, a Logstash plugin - the Java parts"""
 
-project.sourceCompatibility = 1.8
+java {
+  sourceCompatibility = JavaVersion.VERSION_1_8
+  withSourcesJar()
+  withJavadocJar()
+}
 
 compileJava.options.encoding = 'UTF-8'
-
-task sourcesJar(type: Jar, dependsOn: classes) {
-    from sourceSets.main.allSource
-    classifier 'sources'
-    archiveExtension = 'jar'
-}
-
-task javadocJar(type: Jar, dependsOn: javadoc) {
-    from javadoc.destinationDir
-    classifier 'javadoc'
-    archiveExtension = 'jar'
-}
-
-configurations.create('sources')
-configurations.create('javadoc')
-configurations.archives {
-    extendsFrom configurations.sources
-    extendsFrom configurations.javadoc
-}
-
-artifacts {
-    sources(sourcesJar) {
-        // Weird Gradle quirk where type will be used for the extension, but only for sources
-        type 'jar'
-    }
-
-    javadoc(javadocJar) {
-        type 'javadoc'
-    }
-}
 
 configurations {
     provided
