@@ -1,3 +1,6 @@
+## Unreleased
+  - Removed `jar-dependencies` dependency [#91](https://github.com/logstash-plugins/logstash-filter-dissect/pull/91)
+  
 ## 1.2.5
   - fix bad padding `->` suffix with delimiter [#84](https://github.com/logstash-plugins/logstash-filter-dissect/pull/84)
 
