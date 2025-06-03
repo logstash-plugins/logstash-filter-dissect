@@ -482,4 +482,23 @@ public class DissectorTest {
         assertEquals("ZZZ", object.get("z"));
         assertTrue(result.matched());
     }
+
+    // First test to define correct behaviour for elasticsearch#119264
+    @Test
+    public void testForConcurrentDelimitersAdditional() throws Exception {
+        final Map<String, Object> object = new HashMap<>();
+        subject("%{a}-%{b}")
+                .dissect("foo------bar".getBytes(), object);
+        assertEquals("foo", object.get("a"));
+        assertEquals("-----bar", object.get("b"));
+    }
+
+    // Second test to define correct behaviour for elasticsearch#119264
+    @Test
+    public void testForConcurrentDelimitersAdditionalWithEmptyMatches() throws Exception {
+        final Map<String, Object> object = new HashMap<>();
+        subject("%{}|%{}|foo=%{field}")
+                .dissect("||foo=bar".getBytes(), object);
+        assertEquals("bar", object.get("field"));
+    }
 }
