@@ -1,4 +1,5 @@
-## Unreleased
+## 1.2.6
+  - Re-packaging the plugin [#93](https://github.com/logstash-plugins/logstash-filter-dissect/pull/93)
   - Removed `jar-dependencies` dependency [#91](https://github.com/logstash-plugins/logstash-filter-dissect/pull/91)
   
 ## 1.2.5
