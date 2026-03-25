@@ -2,7 +2,6 @@ package org.logstash.dissect;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jruby.NativeException;
 import org.jruby.Ruby;
 import org.jruby.RubyArray;
 import org.jruby.RubyClass;
@@ -41,9 +40,9 @@ public class JavaDissectorLibrary implements Library {
     }
 
     private static final class NativeExceptions {
-        static NativeException newFieldFormatError(final Ruby ruby, final Throwable cause) {
+        static RaiseException newFieldFormatError(final Ruby ruby, final Throwable cause) {
             final RubyClass errorClass = ruby.getModule("LogStash").getClass("FieldFormatError");
-            return new NativeException(ruby, errorClass, cause);
+            return new RaiseException(ruby, errorClass, cause.getMessage(), true);
         }
     }
 
@@ -95,7 +94,7 @@ public class JavaDissectorLibrary implements Library {
             try {
                 dissectors = DissectPair.createArrayFromHash((RubyHash) args[0]);
             } catch (final InvalidFieldException e) {
-                throw new RaiseException(e, JavaDissectorLibrary.NativeExceptions.newFieldFormatError(ruby, e));
+                throw JavaDissectorLibrary.NativeExceptions.newFieldFormatError(ruby, e);
             }
             plugin = (RubyObject) args[1];
             pluginMetaClass = plugin.getMetaClass();

@@ -1,5 +1,6 @@
 # encoding: utf-8
 require 'spec_helper'
+require 'bigdecimal'
 require "logstash/filters/dissect"
 
 describe LogStash::Filters::Dissect do
@@ -184,7 +185,7 @@ describe LogStash::Filters::Dissect do
     CONFIG
     end
     sample({"big_number" => "43947404257507186289.345324"}) do
-      expect(subject.get("big_number")).to eq(BigDecimal.new("43947404257507186289.345324"))
+      expect(subject.get("big_number")).to eq(BigDecimal("43947404257507186289.345324"))
     end
   end
 
@@ -245,7 +246,7 @@ describe LogStash::Filters::Dissect do
     context "when field is defined as Append and Indirect (+&)" do
       let(:config)     { {"mapping" => {"message" => "%{+&timestamp}"}}}
       it "raises an error in register" do
-        msg = /\Aorg\.logstash\.dissect\.fields\.InvalidFieldException: Field cannot prefix with both Append and Indirect Prefix .+/
+        msg = /Field cannot prefix with both Append and Indirect Prefix .+/
         expect{filter.register}.to raise_exception(LogStash::FieldFormatError, msg)
       end
     end
@@ -253,7 +254,7 @@ describe LogStash::Filters::Dissect do
     context "when field is defined as Indirect and Append (&+)" do
       let(:config)     { {"mapping" => {"message" => "%{&+timestamp}"}}}
       it "raises an error in register" do
-        msg = /\Aorg\.logstash\.dissect\.fields\.InvalidFieldException: Field cannot prefix with both Append and Indirect Prefix .+/
+        msg = /Field cannot prefix with both Append and Indirect Prefix .+/
         expect{filter.register}.to raise_exception(LogStash::FieldFormatError, msg)
       end
     end

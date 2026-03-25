@@ -77,10 +77,14 @@ def delete_create_gradle_properties
   gradle_properties_file = "#{root_dir}/gradle.properties"
   # find the path to the logstash-core gem
   lsc_path = Bundler.rubygems.find_name("logstash-core").first.full_gem_path
+  # resolve jruby.jar from the logstash vendor directory
+  ls_home = File.expand_path(File.join(lsc_path, ".."))
+  jruby_jar = File.join(ls_home, "vendor", "jruby", "lib", "jruby.jar")
 
   FileUtils.rm_f(gradle_properties_file)
   File.open(gradle_properties_file, "w") do |f|
     f.puts "logstashCoreGemPath=#{lsc_path}"
+    f.puts "logstashJRubyVendorPath=#{jruby_jar}"
   end
   puts "-------------------> Wrote #{gradle_properties_file}"
   puts `cat #{gradle_properties_file}`
