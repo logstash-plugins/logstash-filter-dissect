@@ -1,3 +1,6 @@
+## 1.3.0
+  - Add JRuby 10 support: replace removed `NativeException` with `RaiseException`, source JRuby from Logstash vendor directory instead of pinning Maven version [#96](https://github.com/logstash-plugins/logstash-filter-dissect/pull/96)
+
 ## 1.2.6
   - Re-packaging the plugin [#93](https://github.com/logstash-plugins/logstash-filter-dissect/pull/93)
   - Removed `jar-dependencies` dependency [#91](https://github.com/logstash-plugins/logstash-filter-dissect/pull/91)
